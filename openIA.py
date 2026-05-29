@@ -4,8 +4,7 @@ import pandas as pd
 # =========================
 # 📂 DATA
 # =========================
-file_path = r"C:\Users\CGutierrezp\OneDrive - BLN Brands\Documentos\ChatBox.xlsx"
-df = pd.read_excel(file_path)
+df = pd.read_excel("ChatBox.xlsx")
 
 df["Gap"] = df["Venta"] - df["Objetivo 1"]
 
