@@ -2,8 +2,24 @@ import streamlit as st
 import pandas as pd
 
 # =========================
-# 📂 DATA
+# 🔐 LOGIN SIMPLE
 # =========================
+
+PASSWORD = "Ventas2026"
+
+password = st.text_input(
+    "Ingresa la contraseña",
+    type="password"
+)
+
+if password != PASSWORD:
+    st.warning("Acceso restringido")
+    st.stop()
+
+# =========================
+# 📂 CARGA DE DATOS
+# =========================
+
 df = pd.read_excel("ChatBox.xlsx")
 
 df["Gap"] = df["Venta"] - df["Objetivo 1"]
