@@ -71,61 +71,79 @@ if st.session_state.page == "dashboard":
     # =========================
     # 📊 KPIs COMO TARJETAS
     # =========================
-    col1, col2 = st.columns(2)
+# =========================
+# KPIs
+# =========================
 
-    col1.metric("Ventas", f"{data['Venta'].sum():,.0f}")
-    col2.metric("Objetivo", f"{data['Objetivo 1'].sum():,.0f}")
+ventas_2026 = data[data["Anio"] == 2026]["Venta"].sum()
 
-    col3, col4 = st.columns(2)
+objetivo_2026 = data[data["Anio"] == 2026]["Objetivo 1"].sum()
 
-    col3.metric("Gap", f"{data['Gap'].sum():,.0f}")
-    col4.metric("Meses", data["Mes"].nunique())
+ventas_2025 = data[data["Anio"] == 2025]["Venta"].sum()
 
-    st.divider()
+gap = ventas_2026 - objetivo_2026
+
+crecimiento = (
+    (ventas_2026 / ventas_2025) - 1
+    if ventas_2025 > 0
+    else 0
+)
+
+col1, col2, col3, col4 = st.columns(4)
+
+col1.metric(
+    "Ventas YTD 2026",
+    f"{ventas_2026:,.0f}"
+)
+
+col2.metric(
+    "Objetivo YTD 2026",
+    f"{objetivo_2026:,.0f}"
+)
+
+col3.metric(
+    "Gap YTD",
+    f"{gap:,.0f}"
+)
+
+col4.metric(
+    "Crecimiento vs 2025",
+    f"{crecimiento:.1%}"
+)
 
     # =========================
     # 📈 GRÁFICO COMPACTO
     # =========================
-    st.subheader("📈 Tendencia")
+# =========================
+# TENDENCIA
+# =========================
 
-    chart = data.groupby("Mes")[["Venta", "Objetivo 1"]].sum()
-    st.line_chart(chart)
+st.subheader("📈 Tendencia mensual")
 
-    st.divider()
+ventas_2026_mes = (
+    data[data["Anio"] == 2026]
+    .groupby("Mes")["Venta"]
+    .sum()
+)
 
-    # =========================
-    # 🎯 INSIGHTS CORTOS (MOBILE FRIENDLY)
-    # =========================
-    st.subheader("🧠 Insights")
+ventas_2025_mes = (
+    data[data["Anio"] == 2025]
+    .groupby("Mes")["Venta"]
+    .sum()
+)
 
-    total_gap = data["Gap"].sum()
+objetivo_mes = (
+    data[data["Anio"] == 2026]
+    .groupby("Mes")["Objetivo 1"]
+    .sum()
+)
 
-    worst = data.groupby("Mes")["Gap"].sum().idxmin()
-    best = data.groupby("Mes")["Gap"].sum().idxmax()
+chart_df = pd.DataFrame({
+    "Ventas 2026": ventas_2026_mes,
+    "Ventas 2025": ventas_2025_mes,
+    "Objetivo": objetivo_mes
+}).fillna(0)
 
-    if total_gap > 0:
-        st.success("🟢 Above target")
-    else:
-        st.error("🔴 Below target")
+st.line_chart(chart_df)
 
-    st.write(f"📉 Peor mes: **{worst}**")
-    st.write(f"📈 Mejor mes: **{best}**")
-
-    # concentración
-    top_month = data.groupby("Mes")["Venta"].sum().max()
-    concentration = top_month / data["Venta"].sum()
-
-    if concentration > 0.4:
-        st.warning("⚠️ Alta dependencia de un mes")
-
-    st.divider()
-
-    # =========================
-    # 📊 TOP / BOTTOM (MOBILE STYLE)
-    # =========================
-    st.subheader("📊 Ranking mensual")
-
-    rank = data.groupby("Mes")["Venta"].sum().sort_values(ascending=False)
-
-    for mes, val in rank.items():
-        st.write(f"📅 Mes {mes}: **{val:,.0f}**")
+    
