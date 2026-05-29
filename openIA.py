@@ -294,23 +294,23 @@ if st.session_state.page == "dashboard":
         pregunta = st.chat_input(
         "Pregunta algo sobre las ventas"
     )
-        if pregunta:
+if pregunta:
 
-            with st.spinner("Analizando..."):
+    with st.spinner("Analizando..."):
 
-             resumen = (
-                data_2026
-                .groupby(
-                    ["Cliente", "Region", "Canal"],
-                    as_index=False
-                )
-                .agg({
-                    "Venta": "sum",
-                    "Objetivo 1": "sum"
-                })
+        resumen = (
+            data_2026
+            .groupby(
+                ["Cliente", "Region", "Canal"],
+                as_index=False
             )
+            .agg({
+                "Venta": "sum",
+                "Objetivo 1": "sum"
+            })
+        )
 
-            prompt = f"""
+        prompt = f"""
 Representado:
 {st.session_state.repre}
 
@@ -324,9 +324,9 @@ Pregunta:
 Responde en español.
 """
 
-            respuesta = client.responses.create(
-                model="gpt-5-mini",
-                input=prompt
-            )
+        respuesta = client.responses.create(
+            model="gpt-5-mini",
+            input=prompt
+        )
 
-        st.write(respuesta.output_text)
+    st.write(respuesta.output_text)
