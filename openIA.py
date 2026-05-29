@@ -15,7 +15,7 @@ type="password"
 )
 
 if password != PASSWORD:
-st.stop()
+    st.stop()
 
 # =====================================
 
