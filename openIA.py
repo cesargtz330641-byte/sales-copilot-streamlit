@@ -324,9 +324,15 @@ Pregunta:
 Responde en español.
 """
 
-        respuesta = client.responses.create(
-            model="gpt-5-mini",
-            input=prompt
-        )
+try:
+
+    respuesta = client.responses.create(
+        model="gpt-5-mini",
+        input=prompt
+    )
 
     st.write(respuesta.output_text)
+
+except Exception as e:
+
+    st.error(f"ERROR: {e}")
