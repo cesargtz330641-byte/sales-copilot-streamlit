@@ -1,31 +1,35 @@
 import streamlit as st
 import pandas as pd
 
-# =========================
+# =====================================
 # CONFIG
-# =========================
+# =====================================
+
 st.set_page_config(
     page_title="Sales Copilot",
     layout="centered"
 )
 
-# =========================
+# =====================================
 # DATA
-# =========================
+# =====================================
+
 df = pd.read_excel("ChatBox.xlsx")
 
-# =========================
-# SESSION STATE
-# =========================
+# =====================================
+# SESSION
+# =====================================
+
 if "page" not in st.session_state:
     st.session_state.page = "selector"
 
 if "repre" not in st.session_state:
     st.session_state.repre = None
 
-# =========================
-# SELECTOR
-# =========================
+# =====================================
+# PANTALLA 1
+# =====================================
+
 if st.session_state.page == "selector":
 
     st.title("📊 Sales Copilot")
@@ -44,9 +48,10 @@ if st.session_state.page == "selector":
             st.session_state.page = "dashboard"
             st.rerun()
 
-# =========================
-# DASHBOARD
-# =========================
+# =====================================
+# PANTALLA 2
+# =====================================
+
 if st.session_state.page == "dashboard":
 
     data = df[
@@ -61,9 +66,9 @@ if st.session_state.page == "dashboard":
         st.session_state.page = "selector"
         st.rerun()
 
-    # =========================
+    # =====================================
     # KPIs
-    # =========================
+    # =====================================
 
     ventas_2026 = data[
         data["Anio"] == 2026
@@ -113,9 +118,9 @@ if st.session_state.page == "dashboard":
 
     st.divider()
 
-    # =========================
+    # =====================================
     # TENDENCIA
-    # =========================
+    # =====================================
 
     st.subheader("📈 Tendencia mensual")
 
@@ -143,18 +148,81 @@ if st.session_state.page == "dashboard":
         "Objetivo 2026": objetivo_mes
     }).fillna(0)
 
-    st.line_chart(chart_df)
+    st.line_chart(
+        chart_df,
+        use_container_width=True
+    )
 
     st.divider()
 
-    # =========================
-    # DETALLE
-    # =========================
+    # =====================================
+    # OPORTUNIDADES
+    # =====================================
 
-    st.subheader("📋 Detalle")
+    st.subheader("🎯 Oportunidades")
 
-    st.dataframe(
-        data,
-        use_container_width=True,
-        height=400
+    data_2026 = data[
+        data["Anio"] == 2026
+    ].copy()
+
+    # Gap fila
+    data_2026["Gap"] = (
+        data_2026["Venta"]
+        - data_2026["Objetivo 1"]
     )
+
+    # Región
+    gap_region = (
+        data_2026
+        .groupby("Region")["Gap"]
+        .sum()
+        .sort_values()
+    )
+
+    peor_region = gap_region.index[0]
+    valor_region = gap_region.iloc[0]
+
+    # Canal
+    gap_canal = (
+        data_2026
+        .groupby("Canal")["Gap"]
+        .sum()
+        .sort_values()
+    )
+
+    peor_canal = gap_canal.index[0]
+    valor_canal = gap_canal.iloc[0]
+
+    # Cliente
+    gap_cliente = (
+        data_2026
+        .groupby("Cliente")["Gap"]
+        .sum()
+        .sort_values()
+    )
+
+    peor_cliente = gap_cliente.index[0]
+    valor_cliente = gap_cliente.iloc[0]
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric(
+            "Mayor Gap Región",
+            peor_region,
+            f"{valor_region:,.0f}"
+        )
+
+    with col2:
+        st.metric(
+            "Mayor Gap Canal",
+            peor_canal,
+            f"{valor_canal:,.0f}"
+        )
+
+    with col3:
+        st.metric(
+            "Mayor Gap Cliente",
+            peor_cliente,
+            f"{valor_cliente:,.0f}"
+        )
