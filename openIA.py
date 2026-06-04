@@ -17,12 +17,20 @@ st.set_page_config(
 
 PASSWORD = "Ventas2026"
 
-password = st.text_input(
-    "Ingresa la contraseña",
-    type="password"
-)
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
 
-if password != PASSWORD:
+if not st.session_state.authenticated:
+
+    password = st.text_input(
+        "Ingresa la contraseña",
+        type="password"
+    )
+
+    if password == PASSWORD:
+        st.session_state.authenticated = True
+        st.rerun()
+
     st.warning("Acceso restringido")
     st.stop()
 
@@ -81,10 +89,6 @@ if st.session_state.page == "dashboard":
         st.session_state.page = "selector"
         st.rerun()
 
-    # =====================================
-    # KPIs YTD
-    # =====================================
-
     venta = data["Venta"].sum()
 
     obj1 = data["Objetivo 1"].sum()
@@ -99,23 +103,16 @@ if st.session_state.page == "dashboard":
     color1 = "#D9534F" if gap1 < 0 else "#16A34A"
     color2 = "#D9534F" if gap2 < 0 else "#16A34A"
 
-    # =====================================
-    # TITULO
-    # =====================================
-
     st.subheader(st.session_state.repre)
-
-    # =====================================
-    # TARJETA
-    # =====================================
 
     card_html = f"""
     <div style="
-        font-family: Arial, sans-serif;
+        font-family:Arial,sans-serif;
         background:white;
         border:1px solid #E5E7EB;
-        border-radius:20px;
+        border-radius:18px;
         padding:12px;
+        display:inline-block;
     ">
 
         <div style="
@@ -157,7 +154,10 @@ if st.session_state.page == "dashboard":
                 {gap1:,.0f}
             </span>
 
-            <span>
+            <span style="
+                color:{color1};
+                font-weight:bold;
+            ">
                 {pct1:.0f}%
             </span>
         </div>
@@ -182,7 +182,10 @@ if st.session_state.page == "dashboard":
                 {gap2:,.0f}
             </span>
 
-            <span>
+            <span style="
+                color:{color2};
+                font-weight:bold;
+            ">
                 {pct2:.0f}%
             </span>
         </div>
@@ -192,19 +195,21 @@ if st.session_state.page == "dashboard":
 
     components.html(
         card_html,
-        height=130,
+        height=140,
         scrolling=False
     )
-
-    # =====================================
-    # TENDENCIA
-    # =====================================
 
     st.subheader("Tendencia")
 
     tendencia = (
         data
-        .groupby("Mes")[["Venta", "Objetivo 1"]]
+        .groupby("Mes")[
+            [
+                "Venta",
+                "Objetivo 1",
+                "Objetivo 2"
+            ]
+        ]
         .sum()
         .sort_index()
     )
