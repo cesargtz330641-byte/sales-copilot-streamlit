@@ -1,18 +1,18 @@
 import streamlit as st
 import pandas as pd
 
-# =========================
+# =====================================
 # CONFIG
-# =========================
+# =====================================
 
 st.set_page_config(
     page_title="Sales Mobile Pro",
     layout="centered"
 )
 
-# =========================
+# =====================================
 # LOGIN
-# =========================
+# =====================================
 
 PASSWORD = "Ventas2026"
 
@@ -25,15 +25,15 @@ if password != PASSWORD:
     st.warning("Acceso restringido")
     st.stop()
 
-# =========================
-# DATOS
-# =========================
+# =====================================
+# DATA
+# =====================================
 
 df = pd.read_excel("ChatBox.xlsx")
 
-# =========================
+# =====================================
 # SESSION
-# =========================
+# =====================================
 
 if "page" not in st.session_state:
     st.session_state.page = "selector"
@@ -41,9 +41,9 @@ if "page" not in st.session_state:
 if "repre" not in st.session_state:
     st.session_state.repre = None
 
-# =========================
-# SELECTOR
-# =========================
+# =====================================
+# PANTALLA 1
+# =====================================
 
 if st.session_state.page == "selector":
 
@@ -51,20 +51,19 @@ if st.session_state.page == "selector":
 
     reps = sorted(df["Repre"].dropna().unique())
 
-    st.write("Selecciona un representado:")
-
     for r in reps:
+
         if st.button(
-            r,
+            f"📊 {r}",
             use_container_width=True
         ):
             st.session_state.repre = r
             st.session_state.page = "dashboard"
             st.rerun()
 
-# =========================
-# DASHBOARD
-# =========================
+# =====================================
+# PANTALLA 2
+# =====================================
 
 if st.session_state.page == "dashboard":
 
@@ -76,6 +75,10 @@ if st.session_state.page == "dashboard":
     if st.button("⬅ Volver"):
         st.session_state.page = "selector"
         st.rerun()
+
+    # =====================================
+    # KPIs
+    # =====================================
 
     venta_ytd = data["Venta"].sum()
 
@@ -91,82 +94,78 @@ if st.session_state.page == "dashboard":
     color1 = "#D9534F" if gap1 < 0 else "#28A745"
     color2 = "#D9534F" if gap2 < 0 else "#28A745"
 
-    st.markdown(
-        f"""
+    # =====================================
+    # TARJETA MOBILE
+    # =====================================
+
+    tarjeta = f"""
+    <div style="
+        border:1px solid #D9D9D9;
+        border-radius:25px;
+        padding:16px;
+        margin-bottom:15px;
+        background-color:white;
+    ">
+
         <div style="
-            border:2px solid #d9d9d9;
-            border-radius:28px;
-            padding:18px;
-            margin-top:5px;
-            margin-bottom:10px;
-            background-color:white;
+            font-size:16px;
+            color:#666;
+            margin-bottom:2px;
         ">
-
-            <div style="
-                font-size:16px;
-                color:#666;
-                margin-bottom:2px;
-            ">
-                {st.session_state.repre}
-            </div>
-
-            <div style="
-                font-size:14px;
-                color:#999;
-            ">
-                Volumen YTD 2026
-            </div>
-
-            <div style="
-                font-size:52px;
-                font-weight:700;
-                color:#1E40AF;
-                line-height:1;
-                margin-top:8px;
-                margin-bottom:18px;
-            ">
-                {venta_ytd:,.0f}
-            </div>
-
-            <div style="
-                display:flex;
-                justify-content:space-between;
-                font-size:15px;
-                margin-bottom:4px;
-            ">
-                <span><b>Obj 1</b> {obj1:,.0f}</span>
-                <span style="color:{color1};">
-                    {gap1:,.0f}
-                </span>
-                <span>
-                    {pct1:.0f}%
-                </span>
-            </div>
-
-            <div style="
-                display:flex;
-                justify-content:space-between;
-                font-size:15px;
-            ">
-                <span><b>Obj 2</b> {obj2:,.0f}</span>
-                <span style="color:{color2};">
-                    {gap2:,.0f}
-                </span>
-                <span>
-                    {pct2:.0f}%
-                </span>
-            </div>
-
+            {st.session_state.repre}
         </div>
-        """,
+
+        <div style="
+            font-size:13px;
+            color:#999;
+        ">
+            Volumen YTD 2026
+        </div>
+
+        <div style="
+            font-size:52px;
+            font-weight:700;
+            color:#1E40AF;
+            line-height:1;
+            margin-top:6px;
+            margin-bottom:14px;
+        ">
+            {venta_ytd:,.0f}
+        </div>
+
+        <table width="100%" style="font-size:15px;">
+            <tr>
+                <td><b>Obj 1</b> {obj1:,.0f}</td>
+                <td align="right" style="color:{color1};">
+                    {gap1:,.0f}
+                </td>
+                <td align="right">
+                    {pct1:.0f}%
+                </td>
+            </tr>
+
+            <tr>
+                <td><b>Obj 2</b> {obj2:,.0f}</td>
+                <td align="right" style="color:{color2};">
+                    {gap2:,.0f}
+                </td>
+                <td align="right">
+                    {pct2:.0f}%
+                </td>
+            </tr>
+        </table>
+
+    </div>
+    """
+
+    st.markdown(
+        tarjeta,
         unsafe_allow_html=True
     )
 
-    # =========================
+    # =====================================
     # TENDENCIA
-    # =========================
-
-    st.subheader("📈 Tendencia")
+    # =====================================
 
     chart = (
         data.groupby("Mes")[["Venta", "Objetivo 1"]]
