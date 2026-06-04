@@ -114,7 +114,7 @@ if st.session_state.page == "dashboard":
     ].copy()
 
     # =====================================
-    # BACK BUTTON
+    # BACK BUTTON + HEADER
     # =====================================
 
     col1, col2 = st.columns([1, 8])
@@ -128,7 +128,7 @@ if st.session_state.page == "dashboard":
         st.markdown(f"### {st.session_state.repre}")
 
     # =====================================
-    # KPI YTD (SIN CAMBIOS LOGICA)
+    # KPI
     # =====================================
 
     mes_actual = datetime.now().month
@@ -152,23 +152,17 @@ if st.session_state.page == "dashboard":
         color = "#16A34A" if v > 0 else "#D9534F" if v < 0 else "#6B7280"
         return f"<span style='color:{color};font-weight:600'>({v:.1f}%)</span>"
 
-    # =====================================
-    # KPI CARD
-    # =====================================
-
     card_html = f"""
     <div style="
         font-family:Arial;
         background:white;
         border:1px solid #E5E7EB;
         border-radius:14px;
-        padding:8px;
+        padding:10px;
         width:100%;
     ">
 
-        <div style="font-size:11px;color:#888;">
-            Volumen YTD
-        </div>
+        <div style="font-size:11px;color:#888;">Volumen YTD</div>
 
         <div style="font-size:32px;font-weight:bold;color:#1D4ED8;">
             {real_ytd:,.0f}
@@ -185,22 +179,23 @@ if st.session_state.page == "dashboard":
     </div>
     """
 
-    components.html(card_html, height=120)
+    components.html(card_html, height=130)
 
     # =====================================
-    # TÍTULO GRÁFICO
+    # TÍTULO
     # =====================================
-  
+
+    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+
     st.markdown(
-    "<div style='font-size:14px;font-weight:600;margin:0;color:#9CA3AF;'>Evolución mensual (K)</div>",
-    unsafe_allow_html=True
-)
+        "<div style='font-size:13px;font-weight:600;color:#9CA3AF;'>Evolución mensual (K)</div>",
+        unsafe_allow_html=True
+    )
 
     # =====================================
-    # TENDENCIA (CORRECTA)
+    # DATA TENDENCIA (SEGURO Y SIN ERRORES)
     # =====================================
 
-    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
     meses_map = {
         1:"Ene",2:"Feb",3:"Mar",4:"Abr",
         5:"May",6:"Jun",7:"Jul",8:"Ago",
@@ -215,76 +210,51 @@ if st.session_state.page == "dashboard":
     tendencia = tendencia.merge(t2026, on="Mes", how="left")
     tendencia = tendencia.merge(t2025, on="Mes", how="left")
 
-    # 🔥 IMPORTANTE: NO llenar Real con 0
+    # NO rellenar ventas reales futuras
     tendencia["Real"] = tendencia["Real"]
     tendencia["LE1"] = tendencia["LE1"].fillna(0)
     tendencia["Real_2025"] = tendencia["Real_2025"].fillna(0)
 
     tendencia["Mes_txt"] = tendencia["Mes"].map(meses_map)
 
-    # 🔥 ORDEN FIJO CORRECTO
-    tendencia["Mes_txt"] = pd.Categorical(
-        tendencia["Mes_txt"],
-        categories=list(meses_map.values()),
-        ordered=True
-    )
+    orden_meses = list(meses_map.values())
 
-    tendencia = tendencia.sort_values("Mes_txt")
-
-    # miles
     tendencia["Real_k"] = tendencia["Real"] / 1000
     tendencia["LE1_k"] = tendencia["LE1"] / 1000
     tendencia["LY_k"] = tendencia["Real_2025"] / 1000
 
-    # 🔥 FUTURO SIN CEROS
     tendencia.loc[tendencia["Mes"] > mes_actual, "Real_k"] = np.nan
 
     # =====================================
-# GRÁFICA (CON LEYENDA CORRECTA)
-# =====================================
+    # GRÁFICA CON LEYENDA
+    # =====================================
 
-base = tendencia.melt(
-    id_vars=["Mes_txt"],
-    value_vars=["Real_k", "LY_k", "LE1_k"],
-    var_name="Serie",
-    value_name="Valor"
-)
+    base = tendencia.melt(
+        id_vars=["Mes_txt"],
+        value_vars=["Real_k", "LY_k", "LE1_k"],
+        var_name="Serie",
+        value_name="Valor"
+    )
 
-base["Serie"] = base["Serie"].map({
-    "Real_k": "Volumen 2026",
-    "LY_k": "Volumen 2025",
-    "LE1_k": "LE1"
-})
+    base["Serie"] = base["Serie"].map({
+        "Real_k": "Volumen 2026",
+        "LY_k": "Volumen 2025",
+        "LE1_k": "LE1"
+    })
 
-orden_meses = list(meses_map.values())
+    color_scale = alt.Scale(
+        domain=["Volumen 2026", "LE1", "Volumen 2025"],
+        range=["#2563EB", "#22C55E", "#9CA3AF"]
+    )
 
-color_scale = alt.Scale(
-    domain=["Volumen 2026", "LE1", "Volumen 2025"],
-    range=[
-        "#2563EB",  # 2026
-        "#22C55E",  # LE1
-        "#9CA3AF"   # 2025
-    ]
-)
-
-chart = alt.Chart(base).mark_line(size=2.5).encode(
-    x=alt.X(
-        "Mes_txt:N",
-        sort=orden_meses,
-        axis=alt.Axis(title=None)
-    ),
-    y=alt.Y(
-        "Valor:Q",
-        axis=alt.Axis(title=None)
-    ),
-    color=alt.Color(
-        "Serie:N",
-        scale=color_scale,
-        legend=alt.Legend(
-            title=None,
-            orient="bottom"   # 👈 AQUÍ CAMBIA EL LUGAR
+    chart = alt.Chart(base).mark_line(size=2.5).encode(
+        x=alt.X("Mes_txt:N", sort=orden_meses, axis=alt.Axis(title=None)),
+        y=alt.Y("Valor:Q", axis=alt.Axis(title=None)),
+        color=alt.Color(
+            "Serie:N",
+            scale=color_scale,
+            legend=alt.Legend(orient="bottom")
         )
     )
-)
 
-st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, use_container_width=True)
