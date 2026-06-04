@@ -178,39 +178,28 @@ if st.session_state.page == "dashboard":
     st.subheader("Tendencia")
 
     import numpy as np
-
-mes_actual = datetime.now().month
-
-meses = pd.DataFrame({
-    "Mes_num": range(1, 13),
-    "Mes_txt": [
-        "Ene","Feb","Mar","Abr","May","Jun",
-        "Jul","Ago","Sep","Oct","Nov","Dic"
-    ]
-})
+    mes_actual = datetime.now().month
 
 # =========================
-# AGRUPAR DATA REAL
+# FILTRAR SOLO AÑO
+# =========================
+tendencia = df[df["Anio"] == 2026].copy()
+
+# =========================
+# AGRUPAR POR LO QUE YA TIENES
 # =========================
 tendencia = (
-    data
-    .groupby("Mes")[["Venta","Objetivo 1","Objetivo 2"]]
+    tendencia
+    .groupby(["Mes_num", "Mes_txt"], as_index=False)[
+        ["Venta", "Objetivo 1", "Objetivo 2"]
+    ]
     .sum()
-    .reset_index()
 )
 
-# asegurar tipo numérico
-tendencia["Mes"] = pd.to_numeric(tendencia["Mes"], errors="coerce")
-
 # =========================
-# MERGE CON BASE FIJA (CLAVE DEL ORDEN)
+# ORDEN REAL (NUMÉRICO, NO ALFABÉTICO)
 # =========================
-tendencia = meses.merge(
-    tendencia,
-    left_on="Mes_num",
-    right_on="Mes",
-    how="left"
-)
+tendencia = tendencia.sort_values("Mes_num")
 
 # =========================
 # OCULTAR FUTURO (SIN 0)
@@ -220,7 +209,24 @@ tendencia["Venta"] = tendencia["Venta"].where(
 )
 
 # =========================
-# GRAFICAR EN ORDEN FIJO
+# ASEGURAR LOS 12 MESES (ENE-DIC)
+# =========================
+base = pd.DataFrame({
+    "Mes_num": range(1, 13),
+    "Mes_txt": [
+        "Ene","Feb","Mar","Abr","May","Jun",
+        "Jul","Ago","Sep","Oct","Nov","Dic"
+    ]
+})
+
+tendencia = base.merge(
+    tendencia,
+    on=["Mes_num", "Mes_txt"],
+    how="left"
+)
+
+# =========================
+# GRAFICAR (ORDEN GARANTIZADO)
 # =========================
 st.line_chart(
     tendencia.set_index("Mes_txt")[["Venta","Objetivo 1","Objetivo 2"]]
