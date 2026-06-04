@@ -15,11 +15,15 @@ st.set_page_config(
 )
 
 # =====================================
-# UI COMPACTA (SOLO DISEÑO)
+# OCULTAR MENU STREAMLIT (MOBILE FIX)
 # =====================================
 
 st.markdown("""
 <style>
+#MainMenu {visibility: hidden;}
+header {visibility: hidden;}
+footer {visibility: hidden;}
+
 .block-container {
     padding-top: 0.5rem;
     padding-bottom: 0rem;
@@ -34,20 +38,13 @@ div[data-testid="stMarkdownContainer"] {
     padding: 0px;
 }
 
-h3 {
-    margin-top: 0px !important;
-    margin-bottom: 2px !important;
-}
-
-/* reduce espacio de botones */
-div[data-testid="stButton"] {
-    margin: 0px;
-    padding: 0px;
-}
-
-/* elimina aire del iframe (chart + html) */
 iframe {
     margin-top: -12px;
+}
+
+h3 {
+    margin-top: 0px !important;
+    margin-bottom: 4px !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -122,7 +119,7 @@ if st.session_state.page == "dashboard":
     ].copy()
 
     # =====================================
-    # BACK BUTTON (COMPACTO)
+    # HEADER (BACK BUTTON RESTAURADO)
     # =====================================
 
     col1, col2 = st.columns([1, 8])
@@ -136,7 +133,7 @@ if st.session_state.page == "dashboard":
         st.markdown(f"### {st.session_state.repre}")
 
     # =====================================
-    # KPI YTD (SIN CAMBIOS LOGICOS)
+    # KPI YTD (REAL + LE1 + 2025)
     # =====================================
 
     mes_actual = datetime.now().month
@@ -156,8 +153,12 @@ if st.session_state.page == "dashboard":
         color = "#16A34A" if v > 0 else "#D9534F" if v < 0 else "#6B7280"
         return f"<span style='color:{color};font-weight:600'>{icon} {v:,.0f}</span>"
 
+    def fmt_pct(v):
+        color = "#16A34A" if v > 0 else "#D9534F" if v < 0 else "#6B7280"
+        return f"<span style='color:{color};font-weight:600'>({v:.1f}%)</span>"
+
     # =====================================
-    # KPI CARD (COMPACTO)
+    # KPI CARD
     # =====================================
 
     card_html = f"""
@@ -179,11 +180,11 @@ if st.session_state.page == "dashboard":
         </div>
 
         <div style="font-size:11px;">
-            LE1: {le1_ytd:,.0f} {fmt(diff_le1)}
+            LE1: {le1_ytd:,.0f} {fmt(diff_le1)} {fmt_pct((diff_le1/le1_ytd)*100 if le1_ytd else 0)}
         </div>
 
         <div style="font-size:11px;">
-            2025: {ly_ytd:,.0f} {fmt(diff_ly)}
+            2025: {ly_ytd:,.0f} {fmt(diff_ly)} {fmt_pct((diff_ly/ly_ytd)*100 if ly_ytd else 0)}
         </div>
 
     </div>
@@ -192,11 +193,10 @@ if st.session_state.page == "dashboard":
     components.html(card_html, height=120)
 
     # =====================================
-    # TÍTULO COMPACTO
+    # TÍTULO GRÁFICA
     # =====================================
 
-    st.markdown("### Evolución mensual")
-    st.markdown("<div style='height:2px'></div>", unsafe_allow_html=True)
+    st.markdown("### Evolución mensual (en miles)")
 
     # =====================================
     # TENDENCIA
