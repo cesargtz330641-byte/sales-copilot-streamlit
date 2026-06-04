@@ -328,7 +328,31 @@ div[data-testid="stDataFrame"] {
 
 st.markdown("📊 % vs LE1")
 
-st.write(
+st.markdown("""
+<style>
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9px;
+}
+
+th {
+    font-size: 9px !important;
+    font-weight: 500 !important;
+    color: #9CA3AF;
+    text-align: center;
+    padding: 2px;
+}
+
+td {
+    font-size: 9px !important;
+    text-align: center;
+    padding: 2px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown(
     matriz_fmt.to_html(escape=False),
     unsafe_allow_html=True
 )
