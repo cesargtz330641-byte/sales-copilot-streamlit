@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # =====================================
-# OCULTAR MENU STREAMLIT (MOBILE FIX)
+# UI FIX (SOLO DISEÑO)
 # =====================================
 
 st.markdown("""
@@ -31,11 +31,6 @@ footer {visibility: hidden;}
 
 div[data-testid="stVerticalBlock"] {
     gap: 0.25rem;
-}
-
-div[data-testid="stMarkdownContainer"] {
-    margin: 0px;
-    padding: 0px;
 }
 
 iframe {
@@ -119,7 +114,7 @@ if st.session_state.page == "dashboard":
     ].copy()
 
     # =====================================
-    # HEADER (BACK BUTTON RESTAURADO)
+    # BACK BUTTON
     # =====================================
 
     col1, col2 = st.columns([1, 8])
@@ -133,7 +128,7 @@ if st.session_state.page == "dashboard":
         st.markdown(f"### {st.session_state.repre}")
 
     # =====================================
-    # KPI YTD (REAL + LE1 + 2025)
+    # KPI YTD (SIN CAMBIOS LOGICA)
     # =====================================
 
     mes_actual = datetime.now().month
@@ -151,7 +146,7 @@ if st.session_state.page == "dashboard":
     def fmt(v):
         icon = "▲" if v > 0 else "▼" if v < 0 else "●"
         color = "#16A34A" if v > 0 else "#D9534F" if v < 0 else "#6B7280"
-        return f"<span style='color:{color};font-weight:600'>{icon} {v:,.0f}</span>"
+        return f"{icon} {v:,.0f}"
 
     def fmt_pct(v):
         color = "#16A34A" if v > 0 else "#D9534F" if v < 0 else "#6B7280"
@@ -193,13 +188,13 @@ if st.session_state.page == "dashboard":
     components.html(card_html, height=120)
 
     # =====================================
-    # TÍTULO GRÁFICA
+    # TÍTULO GRÁFICO
     # =====================================
 
     st.markdown("### Evolución mensual (en miles)")
 
     # =====================================
-    # TENDENCIA
+    # TENDENCIA (CORRECTA)
     # =====================================
 
     meses_map = {
@@ -211,19 +206,41 @@ if st.session_state.page == "dashboard":
     t2026 = data.groupby("Mes", as_index=False)[["Real","LE1"]].sum()
     t2025 = data_ly.groupby("Mes", as_index=False)[["Real"]].sum().rename(columns={"Real":"Real_2025"})
 
-    tendencia = pd.DataFrame({"Mes": range(1,13)})
-    tendencia = tendencia.merge(t2026, on="Mes", how="left").merge(t2025, on="Mes", how="left").fillna(0)
+    tendencia = pd.DataFrame({"Mes": range(1, 13)})
+
+    tendencia = tendencia.merge(t2026, on="Mes", how="left")
+    tendencia = tendencia.merge(t2025, on="Mes", how="left")
+
+    # 🔥 IMPORTANTE: NO llenar Real con 0
+    tendencia["Real"] = tendencia["Real"]
+    tendencia["LE1"] = tendencia["LE1"].fillna(0)
+    tendencia["Real_2025"] = tendencia["Real_2025"].fillna(0)
 
     tendencia["Mes_txt"] = tendencia["Mes"].map(meses_map)
 
+    # 🔥 ORDEN FIJO CORRECTO
+    tendencia["Mes_txt"] = pd.Categorical(
+        tendencia["Mes_txt"],
+        categories=list(meses_map.values()),
+        ordered=True
+    )
+
+    tendencia = tendencia.sort_values("Mes_txt")
+
+    # miles
     tendencia["Real_k"] = tendencia["Real"] / 1000
     tendencia["LE1_k"] = tendencia["LE1"] / 1000
     tendencia["LY_k"] = tendencia["Real_2025"] / 1000
 
+    # 🔥 FUTURO SIN CEROS
     tendencia.loc[tendencia["Mes"] > mes_actual, "Real_k"] = np.nan
 
+    # =====================================
+    # GRÁFICA
+    # =====================================
+
     chart = alt.Chart(tendencia).mark_line().encode(
-        x=alt.X("Mes_txt:N", sort=list(meses_map.values()), axis=alt.Axis(title=None)),
+        x=alt.X("Mes_txt:N", axis=alt.Axis(title=None)),
         y=alt.Y("Real_k:Q", axis=alt.Axis(title=None)),
         color=alt.value("#1D4ED8")
     ) + alt.Chart(tendencia).mark_line(strokeDash=[5,5]).encode(
