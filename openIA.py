@@ -281,9 +281,9 @@ if st.session_state.page == "dashboard":
     tabla = tabla[tabla["Mes"] <= mes_actual]
 
     tabla["% vs LE1"] = np.where(
-    tabla["LE1"] == 0,
-    np.nan,
-    (tabla["Real"] / tabla["LE1"] - 1) * 100
+        tabla["LE1"] == 0,
+        np.nan,
+        (tabla["Real"] / tabla["LE1"] - 1) * 100
     )
 
     # ordenar meses correctamente
@@ -299,42 +299,42 @@ if st.session_state.page == "dashboard":
     data_dict = {}
 
     for m, v in zip(meses, valores):
-    if pd.isna(v):
-    data_dict[m] = ""
-    else:
-    color = "#16A34A" if v >= 0 else "#EF4444"
-    sign = "+" if v >= 0 else ""
-    data_dict[m] = f"<span style='color:{color};font-size:8px;font-weight:600'>{sign}{v:.0f}%</span>"
+        if pd.isna(v):
+            data_dict[m] = ""
+        else:
+            color = "#16A34A" if v >= 0 else "#EF4444"
+            sign = "+" if v >= 0 else ""
+            data_dict[m] = f"<span style='color:{color};font-size:8px;font-weight:600'>{sign}{v:.0f}%</span>"
 
     matriz_fmt = pd.DataFrame([data_dict])
 
     st.markdown("""
     <style>
     table {
-    width: 100%;
-    table-layout: fixed;
-    border-collapse: collapse;
-    font-size: 7px;
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+        font-size: 7px;
     }
 
     /* 🔥 CENTRAR HEADERS Y CELDAS BIEN */
     th, td {
-    font-size: 7px !important;
-    padding: 0px !important;
-    text-align: center !important;
-    vertical-align: middle;
+        font-size: 7px !important;
+        padding: 0px !important;
+        text-align: center !important;
+        vertical-align: middle;
     }
 
     /* 🔥 EVITA EFECTO PEGADO A LA DERECHA */
     th {
-    font-weight: 500 !important;
-    color: #9CA3AF;
-    text-align: center !important;
+        font-weight: 500 !important;
+        color: #9CA3AF;
+        text-align: center !important;
     }
 
     /* 🔥 fuerza distribución uniforme */
     th, td {
-    width: calc(100% / 12);
+        width: calc(100% / 12);
     }
     </style>
     """, unsafe_allow_html=True)
@@ -345,11 +345,11 @@ if st.session_state.page == "dashboard":
 
     st.markdown("""
     <div style="
-    font-size:10px;
-    font-weight:500;
-    color:#9CA3AF;
-    margin-bottom:6px;
-    margin-top:10px;
+        font-size:10px;
+        font-weight:500;
+        color:#9CA3AF;
+        margin-bottom:6px;
+        margin-top:10px;
     ">
     % vs LE1
     </div>
@@ -360,6 +360,6 @@ if st.session_state.page == "dashboard":
     # =========================
 
     st.markdown(
-    matriz_fmt.to_html(escape=False, index=False),
-    unsafe_allow_html=True
+        matriz_fmt.to_html(escape=False, index=False),
+        unsafe_allow_html=True
     )
