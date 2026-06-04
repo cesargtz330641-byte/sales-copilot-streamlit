@@ -202,7 +202,7 @@ if st.session_state.page == "dashboard":
     st.subheader("Tendencia")
 
     import numpy as np
-from datetime import datetime
+    from datetime import datetime
 
 mes_actual = datetime.now().month
 
@@ -213,33 +213,27 @@ tendencia = (
     .reset_index()
 )
 
-# 🔥 Crear estructura completa de 1 a 12 meses (evita “cosas raras”)
-base_meses = pd.DataFrame({"Mes": range(1, 13)})
-tendencia = base_meses.merge(tendencia, on="Mes", how="left")
-
-# 🔥 Asegurar tipo numérico
-for col in ["Venta", "Objetivo 1", "Objetivo 2"]:
-    tendencia[col] = pd.to_numeric(tendencia[col], errors="coerce")
-
-# 🔥 SOLO ocultar venta futura (NO poner 0)
-tendencia.loc[tendencia["Mes"] > mes_actual, "Venta"] = np.nan
-
-# Mapear nombres al final
 meses_nombre = {
     1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr",
     5: "May", 6: "Jun", 7: "Jul", 8: "Ago",
     9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"
 }
 
-tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
-tendencia = tendencia.set_index("Mes")
-
 orden_meses = [
     "Ene","Feb","Mar","Abr","May","Jun",
     "Jul","Ago","Sep","Oct","Nov","Dic"
 ]
 
-tendencia = tendencia.reindex(orden_meses)
+# Convertir número a nombre
+tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
+
+# 🔥 Crear estructura fija de meses (SIEMPRE orden correcto)
+tendencia = (
+    tendencia
+    .set_index("Mes")
+    .reindex(orden_meses)
+    .fillna(0)   # 🔥 aquí garantizas ceros
+)
 
 st.line_chart(
     tendencia[["Venta", "Objetivo 1", "Objetivo 2"]]
