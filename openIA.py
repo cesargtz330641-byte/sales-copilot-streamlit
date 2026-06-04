@@ -34,7 +34,7 @@ div[data-testid="stVerticalBlock"] {
 }
 
 iframe {
-    margin-top: -12px;
+    margin-top: 0px !important;
 }
 
 h3 {
