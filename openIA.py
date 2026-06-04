@@ -135,12 +135,12 @@ if st.session_state.page == "dashboard":
         </div>
 
         <div style="font-size:12px;margin-top:6px;">
-            <b>LE1 YTD:</b> {le1_ytd:,.0f}
+            <b>LE1:</b> {le1_ytd:,.0f}
             {fmt(diff_le1, pct_le1)}
         </div>
 
         <div style="font-size:12px;margin-top:4px;">
-            <b>2025 YTD:</b> {ly_ytd:,.0f}
+            <b>2025:</b> {ly_ytd:,.0f}
             {fmt(diff_ly, pct_ly)}
         </div>
 
@@ -172,25 +172,37 @@ if st.session_state.page == "dashboard":
     tendencia["Mes_txt"] = tendencia["Mes"].map(meses_map)
 
     # ==========================
-    # GRAFICA EN MILES + SIN TITULOS
-    # ==========================
+# GRAFICA EN MILES + FUTURO EN BLANCO
+# ==========================
 
-    tendencia["Real_k"] = tendencia["Real"] / 1000
-    tendencia["LE1_k"] = tendencia["LE1"] / 1000
-    tendencia["LY_k"] = tendencia["Real_2025"] / 1000
+tendencia["Real_k"] = tendencia["Real"] / 1000
+tendencia["LE1_k"] = tendencia["LE1"] / 1000
+tendencia["LY_k"] = tendencia["Real_2025"] / 1000
 
-    chart = alt.Chart(tendencia).mark_line().encode(
-        x=alt.X("Mes_txt:N", sort=list(meses_map.values()), axis=alt.Axis(title=None)),
-        y=alt.Y("Real_k:Q", axis=alt.Axis(title=None)),
-        color=alt.value("#1D4ED8")
-    ) + alt.Chart(tendencia).mark_line(strokeDash=[5,5]).encode(
-        x=alt.X("Mes_txt:N", sort=list(meses_map.values())),
-        y="LE1_k:Q",
-        color=alt.value("#16A34A")
-    ) + alt.Chart(tendencia).mark_line(strokeDash=[2,2]).encode(
-        x=alt.X("Mes_txt:N", sort=list(meses_map.values())),
-        y="LY_k:Q",
-        color=alt.value("#999999")
-    )
+# 🔥 CLAVE: futuros como NaN (no 0)
+tendencia.loc[tendencia["Mes"] > mes_actual, "Real_k"] = np.nan
 
-    st.altair_chart(chart, use_container_width=True)
+chart = alt.Chart(tendencia).mark_line().encode(
+    x=alt.X(
+        "Mes_txt:N",
+        sort=list(meses_map.values()),
+        axis=alt.Axis(title=None)
+    ),
+    y=alt.Y(
+        "Real_k:Q",
+        axis=alt.Axis(
+            title="Ventas en k"
+        )
+    ),
+    color=alt.value("#1D4ED8")
+) + alt.Chart(tendencia).mark_line(strokeDash=[5,5]).encode(
+    x=alt.X("Mes_txt:N", sort=list(meses_map.values())),
+    y="LE1_k:Q",
+    color=alt.value("#16A34A")
+) + alt.Chart(tendencia).mark_line(strokeDash=[2,2]).encode(
+    x=alt.X("Mes_txt:N", sort=list(meses_map.values())),
+    y="LY_k:Q",
+    color=alt.value("#999999")
+)
+
+st.altair_chart(chart, use_container_width=True)
