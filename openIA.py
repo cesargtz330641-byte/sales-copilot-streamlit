@@ -48,13 +48,14 @@ if "repre" not in st.session_state:
 if st.session_state.page == "selector":
 
     st.title("📱 Sales Mobile Pro")
-    st.write("Selecciona un representado:")
 
     reps = sorted(df["Repre"].dropna().unique())
 
+    st.write("Selecciona un representado:")
+
     for r in reps:
         if st.button(
-            f"📊 {r}",
+            r,
             use_container_width=True
         ):
             st.session_state.repre = r
@@ -68,65 +69,98 @@ if st.session_state.page == "selector":
 if st.session_state.page == "dashboard":
 
     data = df[
-        (df["Repre"] == st.session_state.repre) &
-        (df["Anio"] == 2026)
+        (df["Repre"] == st.session_state.repre)
+        & (df["Anio"] == 2026)
     ].copy()
 
     if st.button("⬅ Volver"):
         st.session_state.page = "selector"
         st.rerun()
 
-    # =========================
-    # CALCULOS
-    # =========================
-
     venta_ytd = data["Venta"].sum()
 
-    obj1_ytd = data["Objetivo 1"].sum()
-    obj2_ytd = data["Objetivo 2"].sum()
+    obj1 = data["Objetivo 1"].sum()
+    obj2 = data["Objetivo 2"].sum()
 
-    gap1 = venta_ytd - obj1_ytd
-    gap2 = venta_ytd - obj2_ytd
+    gap1 = venta_ytd - obj1
+    gap2 = venta_ytd - obj2
 
-    pct1 = 0 if obj1_ytd == 0 else (gap1 / obj1_ytd) * 100
-    pct2 = 0 if obj2_ytd == 0 else (gap2 / obj2_ytd) * 100
+    pct1 = 0 if obj1 == 0 else (gap1 / obj1) * 100
+    pct2 = 0 if obj2 == 0 else (gap2 / obj2) * 100
 
-    # =========================
-    # HEADER
-    # =========================
+    color1 = "#D9534F" if gap1 < 0 else "#28A745"
+    color2 = "#D9534F" if gap2 < 0 else "#28A745"
 
-    st.subheader(st.session_state.repre)
+    st.markdown(
+        f"""
+        <div style="
+            border:2px solid #d9d9d9;
+            border-radius:28px;
+            padding:18px;
+            margin-top:5px;
+            margin-bottom:10px;
+            background-color:white;
+        ">
 
-    # =========================
-    # TARJETA PRINCIPAL
-    # =========================
+            <div style="
+                font-size:16px;
+                color:#666;
+                margin-bottom:2px;
+            ">
+                {st.session_state.repre}
+            </div>
 
-    with st.container(border=True):
+            <div style="
+                font-size:14px;
+                color:#999;
+            ">
+                Volumen YTD 2026
+            </div>
 
-        st.caption("Volumen YTD 2026")
+            <div style="
+                font-size:52px;
+                font-weight:700;
+                color:#1E40AF;
+                line-height:1;
+                margin-top:8px;
+                margin-bottom:18px;
+            ">
+                {venta_ytd:,.0f}
+            </div>
 
-        st.metric(
-            label="",
-            value=f"{venta_ytd:,.0f}"
-        )
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                font-size:15px;
+                margin-bottom:4px;
+            ">
+                <span><b>Obj 1</b> {obj1:,.0f}</span>
+                <span style="color:{color1};">
+                    {gap1:,.0f}
+                </span>
+                <span>
+                    {pct1:.0f}%
+                </span>
+            </div>
 
-        st.divider()
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                font-size:15px;
+            ">
+                <span><b>Obj 2</b> {obj2:,.0f}</span>
+                <span style="color:{color2};">
+                    {gap2:,.0f}
+                </span>
+                <span>
+                    {pct2:.0f}%
+                </span>
+            </div>
 
-        col1, col2, col3 = st.columns([1.2, 1, 0.8])
-
-        col1.write("Obj1")
-        col2.write(f"{gap1/1000:,.0f}k")
-        col3.write(f"{pct1:.0f}%")
-
-        col1.caption(f"Meta {obj1_ytd:,.0f}")
-
-        col1, col2, col3 = st.columns([1.2, 1, 0.8])
-
-        col1.write("Obj2")
-        col2.write(f"{gap2/1000:,.0f}k")
-        col3.write(f"{pct2:.0f}%")
-
-        col1.caption(f"Meta {obj2_ytd:,.0f}")
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     # =========================
     # TENDENCIA
@@ -134,13 +168,13 @@ if st.session_state.page == "dashboard":
 
     st.subheader("📈 Tendencia")
 
-    tendencia = (
+    chart = (
         data.groupby("Mes")[["Venta", "Objetivo 1"]]
         .sum()
         .sort_index()
     )
 
     st.line_chart(
-        tendencia,
+        chart,
         use_container_width=True
     )
