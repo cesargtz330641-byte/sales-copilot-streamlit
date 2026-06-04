@@ -24,10 +24,7 @@ if "authenticated" not in st.session_state:
 
 if not st.session_state.authenticated:
 
-    password = st.text_input(
-        "Ingresa la contraseña",
-        type="password"
-    )
+    password = st.text_input("Ingresa la contraseña", type="password")
 
     if password == PASSWORD:
         st.session_state.authenticated = True
@@ -41,6 +38,8 @@ if not st.session_state.authenticated:
 # =====================================
 
 df = pd.read_excel("ChatBox.xlsx")
+
+df.columns = df.columns.str.strip()
 
 # =====================================
 # SESSION
@@ -64,10 +63,7 @@ if st.session_state.page == "selector":
 
     for r in reps:
 
-        if st.button(
-            f"📊 {r}",
-            use_container_width=True
-        ):
+        if st.button(f"📊 {r}", use_container_width=True):
             st.session_state.repre = r
             st.session_state.page = "dashboard"
             st.rerun()
@@ -87,8 +83,11 @@ if st.session_state.page == "dashboard":
         st.session_state.page = "selector"
         st.rerun()
 
-    venta = data["Venta"].sum()
+    # =====================================
+    # KPIs
+    # =====================================
 
+    venta = data["Venta"].sum()
     obj1 = data["Objetivo 1"].sum()
     obj2 = data["Objetivo 2"].sum()
 
@@ -103,131 +102,74 @@ if st.session_state.page == "dashboard":
 
     st.subheader(st.session_state.repre)
 
+    # =====================================
+    # CARD
+    # =====================================
+
     card_html = f"""
     <div style="
-        font-family:Arial,sans-serif;
+        font-family:Arial;
         background:white;
         border:1px solid #E5E7EB;
         border-radius:18px;
         padding:12px;
         display:inline-block;
     ">
+        <div style="font-size:12px;color:#999;">Volumen YTD 2026</div>
 
-        <div style="
-            font-size:12px;
-            color:#999;
-            margin-bottom:4px;
-        ">
-            Volumen YTD 2026
-        </div>
-
-        <div style="
-            font-size:42px;
-            font-weight:bold;
-            color:#1D4ED8;
-            line-height:1;
-            margin-bottom:10px;
-        ">
+        <div style="font-size:42px;font-weight:bold;color:#1D4ED8;">
             {venta:,.0f}
         </div>
 
-        <div style="
-            display:flex;
-            gap:8px;
-            font-size:12px;
-            margin-bottom:4px;
-            align-items:center;
-            flex-wrap:wrap;
-        ">
-            <span><b>Objetivo 1</b></span>
-            <span>{obj1:,.0f}</span>
-            <span style="color:{color1};font-weight:bold;">
-                {gap1:,.0f}
-            </span>
-            <span style="color:{color1};font-weight:bold;">
-                {pct1:.0f}%
-            </span>
+        <div style="font-size:12px;">
+            <b>Obj1:</b> {obj1:,.0f} |
+            <span style="color:{color1};">{gap1:,.0f} ({pct1:.0f}%)</span>
         </div>
 
-        <div style="
-            display:flex;
-            gap:8px;
-            font-size:12px;
-            align-items:center;
-            flex-wrap:wrap;
-        ">
-            <span><b>Objetivo 2</b></span>
-            <span>{obj2:,.0f}</span>
-            <span style="color:{color2};font-weight:bold;">
-                {gap2:,.0f}
-            </span>
-            <span style="color:{color2};font-weight:bold;">
-                {pct2:.0f}%
-            </span>
+        <div style="font-size:12px;">
+            <b>Obj2:</b> {obj2:,.0f} |
+            <span style="color:{color2};">{gap2:,.0f} ({pct2:.0f}%)</span>
         </div>
-
     </div>
     """
 
-    components.html(card_html, height=140, scrolling=False)
+    components.html(card_html, height=140)
 
     # =====================================
-    # TENDENCIA (CORREGIDA BIEN)
+    # TENDENCIA (FIX DEFINITIVO)
     # =====================================
 
     st.subheader("Tendencia")
 
-    import numpy as np
     mes_actual = datetime.now().month
 
-# =========================
-# FILTRAR SOLO AÑO
-# =========================
-tendencia = df[df["Anio"] == 2026].copy()
+    # asegurar numérico
+    data["Mes_num"] = pd.to_numeric(data["Mes_num"], errors="coerce")
 
-# =========================
-# AGRUPAR POR LO QUE YA TIENES
-# =========================
-tendencia = (
-    tendencia
-    .groupby(["Mes_num", "Mes_txt"], as_index=False)[
-        ["Venta", "Objetivo 1", "Objetivo 2"]
-    ]
-    .sum()
-)
+    tendencia = (
+        data
+        .groupby("Mes_num", as_index=False)[
+            ["Venta","Objetivo 1","Objetivo 2"]
+        ]
+        .sum()
+        .sort_values("Mes_num")
+    )
 
-# =========================
-# ORDEN REAL (NUMÉRICO, NO ALFABÉTICO)
-# =========================
-tendencia = tendencia.sort_values("Mes_num")
+    # 🔥 ocultar futuro SIN 0
+    tendencia["Venta"] = tendencia["Venta"].where(
+        tendencia["Mes_num"] <= mes_actual
+    )
 
-# =========================
-# OCULTAR FUTURO (SIN 0)
-# =========================
-tendencia["Venta"] = tendencia["Venta"].where(
-    tendencia["Mes_num"] <= mes_actual
-)
+    # completar meses faltantes (Ene-Dic fijo)
+    base = pd.DataFrame({"Mes_num": range(1,13)})
 
-# =========================
-# ASEGURAR LOS 12 MESES (ENE-DIC)
-# =========================
-base = pd.DataFrame({
-    "Mes_num": range(1, 13),
-    "Mes_txt": [
-        "Ene","Feb","Mar","Abr","May","Jun",
-        "Jul","Ago","Sep","Oct","Nov","Dic"
-    ]
-})
+    tendencia = base.merge(tendencia, on="Mes_num", how="left")
 
-tendencia = base.merge(
-    tendencia,
-    on=["Mes_num", "Mes_txt"],
-    how="left"
-)
+    tendencia = tendencia.fillna(0)
 
-# =========================
-# GRAFICAR (ORDEN GARANTIZADO)
-# =========================
-st.line_chart(
-    tendencia.set_index("Mes_txt")[["Venta","Objetivo 1","Objetivo 2"]]
-)
+    # 🔥 GRAFICA (ORDEN GARANTIZADO)
+    st.line_chart(
+        tendencia.set_index("Mes_num")[[
+            "Venta","Objetivo 1","Objetivo 2"
+        ]]
+    )
