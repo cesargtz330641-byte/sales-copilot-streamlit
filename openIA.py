@@ -201,8 +201,8 @@ if st.session_state.page == "dashboard":
 
     st.subheader("Tendencia")
 
-    import numpy as np
-    from datetime import datetime
+    import pandas as pd
+from datetime import datetime
 
 mes_actual = datetime.now().month
 
@@ -224,16 +224,18 @@ orden_meses = [
     "Jul","Ago","Sep","Oct","Nov","Dic"
 ]
 
-# Convertir número a nombre
+# Convertir número → texto
 tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
 
-# 🔥 Crear estructura fija de meses (SIEMPRE orden correcto)
-tendencia = (
-    tendencia
-    .set_index("Mes")
-    .reindex(orden_meses)
-    .fillna(0)   # 🔥 aquí garantizas ceros
-)
+# 🔥 CLAVE: forzar orden REAL (no alfabético)
+cat_type = pd.CategoricalDtype(categories=orden_meses, ordered=True)
+tendencia["Mes"] = tendencia["Mes"].astype(cat_type)
+
+# Ordenar correctamente
+tendencia = tendencia.sort_values("Mes")
+
+# Completar meses faltantes con 0
+tendencia = tendencia.set_index("Mes").reindex(orden_meses).fillna(0)
 
 st.line_chart(
     tendencia[["Venta", "Objetivo 1", "Objetivo 2"]]
