@@ -270,13 +270,12 @@ if st.session_state.page == "dashboard":
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
     st.altair_chart(chart, use_container_width=True)
     
-    # =========================
+   # =========================
 # SOLO % VS LE1 (ULTRA COMPACTO)
 # =========================
 
 tabla = tendencia[["Mes_txt", "Mes", "Real", "LE1"]].copy()
 
-# solo meses reales
 tabla = tabla[tabla["Mes"] <= mes_actual]
 
 tabla["% vs LE1"] = np.where(
@@ -285,11 +284,9 @@ tabla["% vs LE1"] = np.where(
     (tabla["Real"] / tabla["LE1"] - 1) * 100
 )
 
-# pivot SOLO %
 matriz = tabla[["Mes_txt", "% vs LE1"]].set_index("Mes_txt").T
 matriz = matriz[orden_meses[:mes_actual]]
 
-# formato ultra compacto
 def fmt(v):
     if pd.isna(v):
         return ""
@@ -303,36 +300,14 @@ for col in matriz_fmt.columns:
     matriz_fmt[col] = matriz_fmt[col].apply(fmt)
 
 # =========================
-# CSS ULTRA MINIMAL
+# CSS
 # =========================
-
-st.markdown("""
-<style>
-h3 {
-    font-size: 11px !important;
-    margin: 2px 0px !important;
-    font-weight: 500 !important;
-    color: #9CA3AF !important;
-}
-
-div[data-testid="stDataFrame"] {
-    font-size: 9px !important;
-}
-
-.element-container {
-    margin-top: 0px !important;
-    margin-bottom: 0px !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("📊 % vs LE1")
 
 st.markdown("""
 <style>
 table {
     width: 100%;
-    table-layout: fixed;   /* 🔥 CLAVE */
+    table-layout: fixed;
     border-collapse: collapse;
     font-size: 8px;
 }
@@ -341,19 +316,31 @@ th, td {
     font-size: 8px !important;
     text-align: center;
     padding: 1px !important;
-    overflow: hidden;
     white-space: nowrap;
 }
 
-/* columnas aún más compactas */
 th {
     font-weight: 500 !important;
     color: #9CA3AF;
 }
 
-/* evita expansión por contenido */
 td {
     max-width: 35px;
 }
 </style>
 """, unsafe_allow_html=True)
+
+# =========================
+# TITULO
+# =========================
+
+st.markdown("📊 % vs LE1")
+
+# =========================
+# RENDER DE TABLA (ESTO TE FALTABA)
+# =========================
+
+st.markdown(
+    matriz_fmt.to_html(escape=False),
+    unsafe_allow_html=True
+)
