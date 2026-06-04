@@ -9,7 +9,10 @@ import altair as alt
 # CONFIG
 # =====================================
 
-st.set_page_config(page_title="Sales Mobile Pro", layout="centered")
+st.set_page_config(
+    page_title="Sales Mobile Pro",
+    layout="centered"
+)
 
 # =====================================
 # LOGIN
@@ -59,6 +62,7 @@ if st.session_state.page == "selector":
     reps = sorted(df["Repre"].dropna().unique())
 
     for r in reps:
+
         if st.button(f"📊 {r}", use_container_width=True):
             st.session_state.repre = r
             st.session_state.page = "dashboard"
@@ -85,27 +89,40 @@ if st.session_state.page == "dashboard":
         st.rerun()
 
     # =====================================
-    # KPIs (NO BORRADOS - SOLO AJUSTADOS)
+    # KPIs BASE
     # =====================================
 
     real_2026 = data["Real"].sum()
-    obj_2026 = data["LE1"].sum()
-
+    le1_2026 = data["LE1"].sum()
     real_2025 = data_ly["Real"].sum()
 
-    gap1 = real_2026 - obj_2026
-    gap2 = real_2026 - real_2025
+    diff_le1 = real_2026 - le1_2026
+    diff_ly = real_2026 - real_2025
 
-    pct1 = 0 if obj_2026 == 0 else (gap1 / obj_2026) * 100
-    pct2 = 0 if real_2025 == 0 else (gap2 / real_2025) * 100
+    pct_le1 = 0 if le1_2026 == 0 else (diff_le1 / le1_2026) * 100
+    pct_ly = 0 if real_2025 == 0 else (diff_ly / real_2025) * 100
 
-    color1 = "#D9534F" if gap1 < 0 else "#16A34A"
-    color2 = "#D9534F" if gap2 < 0 else "#16A34A"
+    def format_inline(value, pct):
+        if value > 0:
+            icon = "▲"
+            color = "#16A34A"
+        elif value < 0:
+            icon = "▼"
+            color = "#D9534F"
+        else:
+            icon = "●"
+            color = "#6B7280"
+
+        return f"""
+        <span style="color:{color};font-weight:bold;margin-left:6px;">
+            {icon} {value:,.0f} ({pct:.1f}%)
+        </span>
+        """
 
     st.subheader(st.session_state.repre)
 
     # =====================================
-    # CARD (KPIs CONSERVADOS)
+    # CARD KPI (INLINE)
     # =====================================
 
     card_html = f"""
@@ -116,26 +133,31 @@ if st.session_state.page == "dashboard":
         border-radius:18px;
         padding:12px;
         display:inline-block;
+        width:380px;
     ">
-        <div style="font-size:12px;color:#999;">Volumen YTD 2026</div>
+
+        <div style="font-size:12px;color:#999;">
+            Volumen YTD 2026
+        </div>
 
         <div style="font-size:42px;font-weight:bold;color:#1D4ED8;">
             {real_2026:,.0f}
         </div>
 
-        <div style="font-size:12px;">
-            <b>LE1:</b> {obj_2026:,.0f} |
-            <span style="color:{color1};">{gap1:,.0f} ({pct1:.0f}%)</span>
+        <div style="font-size:12px;margin-top:6px;">
+            <b>LE1:</b> {le1_2026:,.0f}
+            {format_inline(diff_le1, pct_le1)}
         </div>
 
-        <div style="font-size:12px;">
-            <b>2025:</b> {real_2025:,.0f} |
-            <span style="color:{color2};">{gap2:,.0f} ({pct2:.0f}%)</span>
+        <div style="font-size:12px;margin-top:4px;">
+            <b>2025:</b> {real_2025:,.0f}
+            {format_inline(diff_ly, pct_ly)}
         </div>
+
     </div>
     """
 
-    components.html(card_html, height=140)
+    components.html(card_html, height=200)
 
     # =====================================
     # TENDENCIA
@@ -144,6 +166,12 @@ if st.session_state.page == "dashboard":
     st.subheader("Tendencia")
 
     mes_actual = datetime.now().month
+
+    meses_map = {
+        1:"Ene",2:"Feb",3:"Mar",4:"Abr",
+        5:"May",6:"Jun",7:"Jul",8:"Ago",
+        9:"Sep",10:"Oct",11:"Nov",12:"Dic"
+    }
 
     data["Mes"] = pd.to_numeric(data["Mes"], errors="coerce")
     data_ly["Mes"] = pd.to_numeric(data_ly["Mes"], errors="coerce")
@@ -156,21 +184,9 @@ if st.session_state.page == "dashboard":
     base = pd.DataFrame({"Mes": range(1,13)})
     tendencia = base.merge(tendencia, on="Mes", how="left").fillna(0)
 
-    tendencia["Real"] = tendencia["Real"].where(
-        tendencia["Mes"] <= mes_actual
-    )
-
-    meses_map = {
-        1:"Ene",2:"Feb",3:"Mar",4:"Abr",
-        5:"May",6:"Jun",7:"Jul",8:"Ago",
-        9:"Sep",10:"Oct",11:"Nov",12:"Dic"
-    }
+    tendencia["Real"] = tendencia["Real"].where(tendencia["Mes"] <= mes_actual)
 
     tendencia["Mes_txt"] = tendencia["Mes"].map(meses_map)
-
-    # =====================================
-    # GRAFICA
-    # =====================================
 
     chart = alt.Chart(tendencia).mark_line().encode(
         x=alt.X("Mes_txt:N", sort=list(meses_map.values())),
