@@ -179,53 +179,22 @@ if st.session_state.page == "dashboard":
 
     mes_actual = datetime.now().month
 
-meses_nombre = {
-    1:"Ene",2:"Feb",3:"Mar",4:"Abr",
-    5:"May",6:"Jun",7:"Jul",8:"Ago",
-    9:"Sep",10:"Oct",11:"Nov",12:"Dic"
-}
-
-orden_meses = list(meses_nombre.keys())
-
-# =========================
-# AGRUPAR (SIN TOCAR MES)
-# =========================
 tendencia = (
     data
-    .groupby("Mes", as_index=False)[["Venta","Objetivo 1","Objetivo 2"]]
+    .groupby(["Mes_num", "Mes_txt"])[["Venta","Objetivo 1","Objetivo 2"]]
     .sum()
+    .reset_index()
 )
 
-# =========================
-# ASEGURAR ORDEN NUMÉRICO REAL
-# =========================
-tendencia = tendencia.sort_values("Mes")
+# ordenar por número
+tendencia = tendencia.sort_values("Mes_num")
 
-# =========================
-# OCULTAR FUTURO (SIN 0)
-# =========================
+# ocultar futuro sin romper gráfica
 tendencia["Venta"] = tendencia["Venta"].where(
-    tendencia["Mes"] <= mes_actual
+    tendencia["Mes_num"] <= mes_actual
 )
 
-# =========================
-# MAPEAR A TEXTO SOLO AL FINAL
-# =========================
-tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
-
-# =========================
-# ASEGURAR LOS 12 MESES SIEMPRE
-# =========================
-base = pd.DataFrame({
-    "Mes": list(meses_nombre.values())
-})
-
-tendencia = base.merge(
-    tendencia,
-    on="Mes",
-    how="left"
-)
-
+# gráfico usando texto solo para display
 st.line_chart(
-    tendencia.set_index("Mes")[["Venta","Objetivo 1","Objetivo 2"]]
+    tendencia.set_index("Mes_txt")[["Venta","Objetivo 1","Objetivo 2"]]
 )
