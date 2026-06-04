@@ -153,7 +153,8 @@ if st.session_state.page == "dashboard":
     # TENDENCIA
     # =====================================
 
-    st.subheader("Tendencia")
+    st.markdown("<div style='margin-top:-20px'></div>", unsafe_allow_html=True)
+    st.markdown("### Evolución mensual")
 
     meses_map = {
         1:"Ene",2:"Feb",3:"Mar",4:"Abr",
