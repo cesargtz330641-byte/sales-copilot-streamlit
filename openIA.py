@@ -269,3 +269,46 @@ if st.session_state.page == "dashboard":
 
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
     st.altair_chart(chart, use_container_width=True)
+    
+# =========================
+# TABLA DE DESEMPEÑO MENSUAL
+# =========================
+
+tabla = tendencia[["Mes_txt", "Real", "LE1"]].copy()
+
+tabla["Real"] = tabla["Real"].fillna(0)
+tabla["LE1"] = tabla["LE1"].fillna(0)
+
+tabla["% Cumplimiento"] = np.where(
+    tabla["LE1"] == 0,
+    np.nan,
+    (tabla["Real"] / tabla["LE1"]) * 100
+)
+
+def semaforo(pct):
+    if pd.isna(pct):
+        return "⚪"
+    elif pct >= 100:
+        return "🟢"
+    elif pct >= 90:
+        return "🟠"
+    else:
+        return "🔴"
+
+tabla["Status"] = tabla["% Cumplimiento"].apply(semaforo)
+
+tabla["Real"] = tabla["Real"].apply(lambda x: f"{x:,.0f}")
+tabla["LE1"] = tabla["LE1"].apply(lambda x: f"{x:,.0f}")
+tabla["% Cumplimiento"] = tabla["% Cumplimiento"].apply(
+    lambda x: "" if pd.isna(x) else f"{x:.1f}%"
+)
+
+tabla = tabla[["Mes_txt", "Real", "LE1", "% Cumplimiento", "Status"]]
+
+st.markdown("### 📊 Desempeño mensual")
+
+st.dataframe(
+    tabla,
+    use_container_width=True,
+    hide_index=True
+)
