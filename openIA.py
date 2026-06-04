@@ -240,27 +240,45 @@ if st.session_state.page == "dashboard":
     tendencia.loc[tendencia["Mes"] > mes_actual, "Real_k"] = np.nan
 
     # =====================================
-    # GRÁFICA
-    # =====================================
+# GRÁFICA (CON LEYENDA CORRECTA)
+# =====================================
 
-    orden_meses = list(meses_map.values())
-
-    chart = alt.Chart(tendencia).mark_line().encode(
-     x=alt.X(
-        "Mes_txt:N",
-        sort=orden_meses,   # 👈 ESTO ES LO CRÍTICO
-        axis=alt.Axis(title=None)
-    ),
-    y=alt.Y("Real_k:Q", axis=alt.Axis(title=None)),
-    color=alt.value("#1D4ED8")
-) + alt.Chart(tendencia).mark_line(strokeDash=[5,5]).encode(
-    x=alt.X("Mes_txt:N", sort=orden_meses),
-    y="LE1_k:Q",
-    color=alt.value("#16A34A")
-) + alt.Chart(tendencia).mark_line(strokeDash=[2,2]).encode(
-    x=alt.X("Mes_txt:N", sort=orden_meses),
-    y="LY_k:Q",
-    color=alt.value("#999999")
+base = tendencia.melt(
+    id_vars=["Mes_txt"],
+    value_vars=["Real_k", "LE1_k", "LY_k"],
+    var_name="Serie",
+    value_name="Valor"
 )
 
-    st.altair_chart(chart, use_container_width=True)
+orden_meses = list(meses_map.values())
+
+color_scale = alt.Scale(
+    domain=["Real_k", "LE1_k", "LY_k"],
+    range=[
+        "#2563EB",  # Real 2026 (azul principal)
+        "#22C55E",  # LE1 (verde objetivo)
+        "#9CA3AF"   # 2025 (gris comparativo)
+    ]
+)
+
+chart = alt.Chart(base).mark_line(size=2.5).encode(
+    x=alt.X(
+        "Mes_txt:N",
+        sort=orden_meses,
+        axis=alt.Axis(title=None)
+    ),
+    y=alt.Y(
+        "Valor:Q",
+        axis=alt.Axis(title=None)
+    ),
+    color=alt.Color(
+        "Serie:N",
+        scale=color_scale,
+        legend=alt.Legend(
+            title=None,
+            orient="top"
+        )
+    )
+)
+
+st.altair_chart(chart, use_container_width=True)
