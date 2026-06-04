@@ -271,49 +271,60 @@ if st.session_state.page == "dashboard":
     st.altair_chart(chart, use_container_width=True)
     
     # =========================
-# MATRIZ % VS LE1 (LIMPIA)
+    # MATRIZ % VS LE1 (COMPACTA)
+    # =========================
+
+    tabla = tendencia[["Mes_txt", "Mes", "Real", "LE1"]].copy()
+
+    # solo meses reales
+    tabla = tabla[tabla["Mes"] <= mes_actual]
+
+    tabla["% vs LE1"] = np.where(
+     tabla["LE1"] == 0,
+      np.nan,
+      (tabla["Real"] / tabla["LE1"] - 1) * 100
+    )
+
+    # pivot
+    matriz = tabla[["Mes_txt", "% vs LE1"]].set_index("Mes_txt").T
+
+    matriz = matriz[orden_meses[:mes_actual]]
+
+    # formato compacto (0 decimales + colores)
+    def formato(v):
+     if pd.isna(v):
+          return ""
+
+     sign = "+" if v >= 0 else ""
+     color = "#16A34A" if v >= 0 else "#EF4444"
+
+     return f"<span style='color:{color};font-size:10px;font-weight:600'>{sign}{v:.0f}%</span>"
+
+    matriz_fmt = matriz.copy()
+
+    for col in matriz_fmt.columns:
+     matriz_fmt[col] = matriz_fmt[col].apply(formato)
+
+# =========================
+# CSS ULTRA COMPACTO
 # =========================
 
-tabla = tendencia[["Mes_txt", "Mes", "Real", "LE1"]].copy()
+    st.markdown("""
+    <style>
+    div[data-testid="stDataFrame"] {
+     font-size: 10px !important;
+    }
 
-# solo meses hasta actual (IMPORTANTE)
-tabla = tabla[tabla["Mes"] <= mes_actual]
+    h3 {
+     font-size: 12px !important;
+     margin-bottom: 4px !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-tabla["% vs LE1"] = np.where(
-    tabla["LE1"] == 0,
-    np.nan,
-    (tabla["Real"] / tabla["LE1"] - 1) * 100
-)
+    st.markdown("### 📊 % vs LE1 (Mensual)")
 
-# pivot
-matriz = tabla[["Mes_txt", "% vs LE1"]].set_index("Mes_txt").T
-
-matriz = matriz[orden_meses[:mes_actual]]  # solo meses reales
-
-# formato con color HTML
-def formato(v):
-    if pd.isna(v):
-        return ""
-
-    sign = "+" if v >= 0 else ""
-    color = "#16A34A" if v >= 0 else "#EF4444"  # verde / rojo
-
-    return f"<span style='color:{color};font-size:12px;font-weight:600'>{sign}{v:.1f}%</span>"
-
-matriz_fmt = matriz.copy()
-
-for col in matriz_fmt.columns:
-    matriz_fmt[col] = matriz_fmt[col].apply(formato)
-
-# CSS para reducir tamaño global de tabla
-st.markdown("""
-<style>
-div[data-testid="stDataFrame"] {
-    font-size: 12px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-st.markdown("### 📊 % vs LE1 por mes")
-
-st.write(matriz_fmt.to_html(escape=False), unsafe_allow_html=True)
+    st.write(
+     matriz_fmt.to_html(escape=False),
+     unsafe_allow_html=True
+    )
