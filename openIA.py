@@ -239,18 +239,24 @@ if st.session_state.page == "dashboard":
     # GRÁFICA
     # =====================================
 
+    orden_meses = list(meses_map.values())
+
     chart = alt.Chart(tendencia).mark_line().encode(
-        x=alt.X("Mes_txt:N", axis=alt.Axis(title=None)),
-        y=alt.Y("Real_k:Q", axis=alt.Axis(title=None)),
-        color=alt.value("#1D4ED8")
-    ) + alt.Chart(tendencia).mark_line(strokeDash=[5,5]).encode(
-        x="Mes_txt:N",
-        y="LE1_k:Q",
-        color=alt.value("#16A34A")
-    ) + alt.Chart(tendencia).mark_line(strokeDash=[2,2]).encode(
-        x="Mes_txt:N",
-        y="LY_k:Q",
-        color=alt.value("#999999")
-    )
+     x=alt.X(
+        "Mes_txt:N",
+        sort=orden_meses,   # 👈 ESTO ES LO CRÍTICO
+        axis=alt.Axis(title=None)
+    ),
+    y=alt.Y("Real_k:Q", axis=alt.Axis(title=None)),
+    color=alt.value("#1D4ED8")
+) + alt.Chart(tendencia).mark_line(strokeDash=[5,5]).encode(
+    x=alt.X("Mes_txt:N", sort=orden_meses),
+    y="LE1_k:Q",
+    color=alt.value("#16A34A")
+) + alt.Chart(tendencia).mark_line(strokeDash=[2,2]).encode(
+    x=alt.X("Mes_txt:N", sort=orden_meses),
+    y="LY_k:Q",
+    color=alt.value("#999999")
+)
 
     st.altair_chart(chart, use_container_width=True)
