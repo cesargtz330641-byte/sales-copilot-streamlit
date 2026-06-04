@@ -3,6 +3,7 @@ import streamlit.components.v1 as components
 import pandas as pd
 import numpy as np
 from datetime import datetime
+import altair as alt
 
 # =====================================
 # CONFIG
@@ -38,7 +39,6 @@ if not st.session_state.authenticated:
 # =====================================
 
 df = pd.read_excel("ChatBox.xlsx")
-
 df.columns = df.columns.str.strip()
 
 # =====================================
@@ -136,12 +136,18 @@ if st.session_state.page == "dashboard":
     components.html(card_html, height=140)
 
     # =====================================
-    # TENDENCIA (FIX DEFINITIVO)
+    # TENDENCIA (ALTAMENTE ESTABLE)
     # =====================================
 
     st.subheader("Tendencia")
 
     mes_actual = datetime.now().month
+
+    meses_map = {
+        1:"Ene",2:"Feb",3:"Mar",4:"Abr",
+        5:"May",6:"Jun",7:"Jul",8:"Ago",
+        9:"Sep",10:"Oct",11:"Nov",12:"Dic"
+    }
 
     # asegurar numérico
     data["Mes_num"] = pd.to_numeric(data["Mes_num"], errors="coerce")
@@ -152,24 +158,37 @@ if st.session_state.page == "dashboard":
             ["Venta","Objetivo 1","Objetivo 2"]
         ]
         .sum()
-        .sort_values("Mes_num")
     )
 
-    # 🔥 ocultar futuro SIN 0
-    tendencia["Venta"] = tendencia["Venta"].where(
-        tendencia["Mes_num"] <= mes_actual
-    )
-
-    # completar meses faltantes (Ene-Dic fijo)
+    # completar meses 1-12
     base = pd.DataFrame({"Mes_num": range(1,13)})
 
     tendencia = base.merge(tendencia, on="Mes_num", how="left")
 
-    tendencia = tendencia.fillna(0)
-
-    # 🔥 GRAFICA (ORDEN GARANTIZADO)
-    st.line_chart(
-        tendencia.set_index("Mes_num")[[
-            "Venta","Objetivo 1","Objetivo 2"
-        ]]
+    # ocultar futuro (NO 0)
+    tendencia["Venta"] = tendencia["Venta"].where(
+        tendencia["Mes_num"] <= mes_actual
     )
+
+    # etiquetas
+    tendencia["Mes_txt"] = tendencia["Mes_num"].map(meses_map)
+
+    # =========================
+    # GRAFICA ALTAR
+    # =========================
+
+    chart = alt.Chart(tendencia).mark_line().encode(
+        x=alt.X("Mes_txt:N", sort=list(meses_map.values())),
+        y="Venta:Q",
+        color=alt.value("#1D4ED8")
+    ) + alt.Chart(tendencia).mark_line(strokeDash=[5,5]).encode(
+        x=alt.X("Mes_txt:N", sort=list(meses_map.values())),
+        y="Objetivo 1:Q",
+        color=alt.value("#16A34A")
+    ) + alt.Chart(tendencia).mark_line(strokeDash=[2,2]).encode(
+        x=alt.X("Mes_txt:N", sort=list(meses_map.values())),
+        y="Objetivo 2:Q",
+        color=alt.value("#F59E0B")
+    )
+
+    st.altair_chart(chart, use_container_width=True)
