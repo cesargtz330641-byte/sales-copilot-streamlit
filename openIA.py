@@ -9,7 +9,48 @@ import altair as alt
 # CONFIG
 # =====================================
 
-st.set_page_config(page_title="Sales Mobile Pro", layout="centered")
+st.set_page_config(
+    page_title="Sales Mobile Pro",
+    layout="centered"
+)
+
+# =====================================
+# UI COMPACTA (SOLO DISEÑO)
+# =====================================
+
+st.markdown("""
+<style>
+.block-container {
+    padding-top: 0.5rem;
+    padding-bottom: 0rem;
+}
+
+div[data-testid="stVerticalBlock"] {
+    gap: 0.25rem;
+}
+
+div[data-testid="stMarkdownContainer"] {
+    margin: 0px;
+    padding: 0px;
+}
+
+h3 {
+    margin-top: 0px !important;
+    margin-bottom: 2px !important;
+}
+
+/* reduce espacio de botones */
+div[data-testid="stButton"] {
+    margin: 0px;
+    padding: 0px;
+}
+
+/* elimina aire del iframe (chart + html) */
+iframe {
+    margin-top: -12px;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # =====================================
 # LOGIN
@@ -21,6 +62,7 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
+
     password = st.text_input("Ingresa la contraseña", type="password")
 
     if password == PASSWORD:
@@ -53,7 +95,7 @@ if "repre" not in st.session_state:
 
 if st.session_state.page == "selector":
 
-    st.title("📱 Sales Mobile Pro")
+    st.markdown("### 📊 Sales Mobile Pro")
 
     reps = sorted(df["Repre"].dropna().unique())
 
@@ -69,58 +111,53 @@ if st.session_state.page == "selector":
 
 if st.session_state.page == "dashboard":
 
-    data_2026 = df[
+    data = df[
         (df["Repre"] == st.session_state.repre)
         & (df["Anio"] == 2026)
     ].copy()
 
-    data_2025 = df[
+    data_ly = df[
         (df["Repre"] == st.session_state.repre)
         & (df["Anio"] == 2025)
     ].copy()
 
-    col1, col2 = st.columns([1, 6])
+    # =====================================
+    # BACK BUTTON (COMPACTO)
+    # =====================================
+
+    col1, col2 = st.columns([1, 8])
 
     with col1:
-        if st.button("⬅", use_container_width=True):
-          st.session_state.page = "selector"
-          st.rerun()
+        if st.button("⬅"):
+            st.session_state.page = "selector"
+            st.rerun()
 
     with col2:
-     st.markdown(" ")
+        st.markdown(f"### {st.session_state.repre}")
 
     # =====================================
-    # MES ACTUAL (YTD LIMIT)
+    # KPI YTD (SIN CAMBIOS LOGICOS)
     # =====================================
 
     mes_actual = datetime.now().month
 
-    data_2026["Mes"] = pd.to_numeric(data_2026["Mes"], errors="coerce")
-    data_2025["Mes"] = pd.to_numeric(data_2025["Mes"], errors="coerce")
+    data["Mes"] = pd.to_numeric(data["Mes"], errors="coerce")
+    data_ly["Mes"] = pd.to_numeric(data_ly["Mes"], errors="coerce")
 
-    # ==============================
-    # KPI YTD (CORRECTO)
-    # ==============================
-
-    real_ytd = data_2026.loc[data_2026["Mes"] <= mes_actual, "Real"].sum()
-    le1_ytd = data_2026.loc[data_2026["Mes"] <= mes_actual, "LE1"].sum()
-    ly_ytd = data_2025.loc[data_2025["Mes"] <= mes_actual, "Real"].sum()
+    real_ytd = data.loc[data["Mes"] <= mes_actual, "Real"].sum()
+    le1_ytd = data.loc[data["Mes"] <= mes_actual, "LE1"].sum()
+    ly_ytd = data_ly.loc[data_ly["Mes"] <= mes_actual, "Real"].sum()
 
     diff_le1 = real_ytd - le1_ytd
     diff_ly = real_ytd - ly_ytd
 
-    pct_le1 = 0 if le1_ytd == 0 else (diff_le1 / le1_ytd) * 100
-    pct_ly = 0 if ly_ytd == 0 else (diff_ly / ly_ytd) * 100
-
-    def fmt(v, p):
+    def fmt(v):
         icon = "▲" if v > 0 else "▼" if v < 0 else "●"
         color = "#16A34A" if v > 0 else "#D9534F" if v < 0 else "#6B7280"
-        return f"<span style='color:{color};font-weight:bold;margin-left:6px;'>{icon} {v:,.0f} ({p:.1f}%)</span>"
-
-    st.subheader(st.session_state.repre)
+        return f"<span style='color:{color};font-weight:600'>{icon} {v:,.0f}</span>"
 
     # =====================================
-    # CARD KPI
+    # KPI CARD (COMPACTO)
     # =====================================
 
     card_html = f"""
@@ -128,40 +165,42 @@ if st.session_state.page == "dashboard":
         font-family:Arial;
         background:white;
         border:1px solid #E5E7EB;
-        border-radius:18px;
-        padding:12px;
-        display:inline-block;
-        width:380px;
+        border-radius:14px;
+        padding:8px;
+        width:100%;
     ">
 
-        <div style="font-size:12px;color:#999;">Volumen YTD 2026</div>
+        <div style="font-size:11px;color:#888;">
+            Volumen YTD
+        </div>
 
-        <div style="font-size:42px;font-weight:bold;color:#1D4ED8;">
+        <div style="font-size:32px;font-weight:bold;color:#1D4ED8;">
             {real_ytd:,.0f}
         </div>
 
-        <div style="font-size:12px;margin-top:6px;">
-            <b>LE1:</b> {le1_ytd:,.0f}
-            {fmt(diff_le1, pct_le1)}
+        <div style="font-size:11px;">
+            LE1: {le1_ytd:,.0f} {fmt(diff_le1)}
         </div>
 
-        <div style="font-size:12px;margin-top:4px;">
-            <b>2025:</b> {ly_ytd:,.0f}
-            {fmt(diff_ly, pct_ly)}
+        <div style="font-size:11px;">
+            2025: {ly_ytd:,.0f} {fmt(diff_ly)}
         </div>
 
     </div>
     """
 
-    components.html(card_html, height=140)
-    st.markdown("<div style='margin-top:-30px'></div>", unsafe_allow_html=True)
+    components.html(card_html, height=120)
+
+    # =====================================
+    # TÍTULO COMPACTO
+    # =====================================
+
+    st.markdown("### Evolución mensual")
+    st.markdown("<div style='height:2px'></div>", unsafe_allow_html=True)
 
     # =====================================
     # TENDENCIA
     # =====================================
-
-    
-    st.markdown("### Evolución mensual")
 
     meses_map = {
         1:"Ene",2:"Feb",3:"Mar",4:"Abr",
@@ -169,48 +208,32 @@ if st.session_state.page == "dashboard":
         9:"Sep",10:"Oct",11:"Nov",12:"Dic"
     }
 
-    t2026 = data_2026.groupby("Mes", as_index=False)[["Real","LE1"]].sum()
-    t2025 = data_2025.groupby("Mes", as_index=False)[["Real"]].sum().rename(columns={"Real":"Real_2025"})
+    t2026 = data.groupby("Mes", as_index=False)[["Real","LE1"]].sum()
+    t2025 = data_ly.groupby("Mes", as_index=False)[["Real"]].sum().rename(columns={"Real":"Real_2025"})
 
     tendencia = pd.DataFrame({"Mes": range(1,13)})
-    tendencia = tendencia.merge(t2026, on="Mes", how="left").merge(t2025, on="Mes", how="left")
-
-    tendencia = tendencia.fillna(0)
+    tendencia = tendencia.merge(t2026, on="Mes", how="left").merge(t2025, on="Mes", how="left").fillna(0)
 
     tendencia["Mes_txt"] = tendencia["Mes"].map(meses_map)
 
-    # ==========================
-# GRAFICA EN MILES + FUTURO EN BLANCO
-# ==========================
+    tendencia["Real_k"] = tendencia["Real"] / 1000
+    tendencia["LE1_k"] = tendencia["LE1"] / 1000
+    tendencia["LY_k"] = tendencia["Real_2025"] / 1000
 
-tendencia["Real_k"] = tendencia["Real"] / 1000
-tendencia["LE1_k"] = tendencia["LE1"] / 1000
-tendencia["LY_k"] = tendencia["Real_2025"] / 1000
+    tendencia.loc[tendencia["Mes"] > mes_actual, "Real_k"] = np.nan
 
-# 🔥 CLAVE: futuros como NaN (no 0)
-tendencia.loc[tendencia["Mes"] > mes_actual, "Real_k"] = np.nan
+    chart = alt.Chart(tendencia).mark_line().encode(
+        x=alt.X("Mes_txt:N", sort=list(meses_map.values()), axis=alt.Axis(title=None)),
+        y=alt.Y("Real_k:Q", axis=alt.Axis(title=None)),
+        color=alt.value("#1D4ED8")
+    ) + alt.Chart(tendencia).mark_line(strokeDash=[5,5]).encode(
+        x="Mes_txt:N",
+        y="LE1_k:Q",
+        color=alt.value("#16A34A")
+    ) + alt.Chart(tendencia).mark_line(strokeDash=[2,2]).encode(
+        x="Mes_txt:N",
+        y="LY_k:Q",
+        color=alt.value("#999999")
+    )
 
-chart = alt.Chart(tendencia).mark_line().encode(
-    x=alt.X(
-        "Mes_txt:N",
-        sort=list(meses_map.values()),
-        axis=alt.Axis(title=None)
-    ),
-    y=alt.Y(
-        "Real_k:Q",
-        axis=alt.Axis(
-            title="Ventas en k"
-        )
-    ),
-    color=alt.value("#1D4ED8")
-) + alt.Chart(tendencia).mark_line(strokeDash=[5,5]).encode(
-    x=alt.X("Mes_txt:N", sort=list(meses_map.values())),
-    y="LE1_k:Q",
-    color=alt.value("#16A34A")
-) + alt.Chart(tendencia).mark_line(strokeDash=[2,2]).encode(
-    x=alt.X("Mes_txt:N", sort=list(meses_map.values())),
-    y="LY_k:Q",
-    color=alt.value("#999999")
-)
-
-st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(chart, use_container_width=True)
