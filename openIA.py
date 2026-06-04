@@ -272,94 +272,94 @@ if st.session_state.page == "dashboard":
     
    
 
-# =========================
-# SOLO % VS LE1 (SIN PRIMERA COLUMNA)
-# =========================
+    # =========================
+    # SOLO % VS LE1 (SIN PRIMERA COLUMNA)
+    # =========================
 
-tabla = tendencia[["Mes_txt", "Mes", "Real", "LE1"]].copy()
+    tabla = tendencia[["Mes_txt", "Mes", "Real", "LE1"]].copy()
 
-tabla = tabla[tabla["Mes"] <= mes_actual]
+    tabla = tabla[tabla["Mes"] <= mes_actual]
 
-tabla["% vs LE1"] = np.where(
+    tabla["% vs LE1"] = np.where(
     tabla["LE1"] == 0,
     np.nan,
     (tabla["Real"] / tabla["LE1"] - 1) * 100
-)
+    )
 
-# ordenar meses correctamente
-tabla = tabla.sort_values("Mes")
+    # ordenar meses correctamente
+    tabla = tabla.sort_values("Mes")
 
-# =========================
-# CONSTRUCCIÓN LIMPIA (CLAVE)
-# =========================
+    # =========================
+    # CONSTRUCCIÓN LIMPIA (CLAVE)
+    # =========================
 
-meses = tabla["Mes_txt"].tolist()
-valores = tabla["% vs LE1"].tolist()
+    meses = tabla["Mes_txt"].tolist()
+    valores = tabla["% vs LE1"].tolist()
 
-data_dict = {}
+    data_dict = {}
 
-for m, v in zip(meses, valores):
+    for m, v in zip(meses, valores):
     if pd.isna(v):
-        data_dict[m] = ""
+    data_dict[m] = ""
     else:
-        color = "#16A34A" if v >= 0 else "#EF4444"
-        sign = "+" if v >= 0 else ""
-        data_dict[m] = f"<span style='color:{color};font-size:8px;font-weight:600'>{sign}{v:.0f}%</span>"
+    color = "#16A34A" if v >= 0 else "#EF4444"
+    sign = "+" if v >= 0 else ""
+    data_dict[m] = f"<span style='color:{color};font-size:8px;font-weight:600'>{sign}{v:.0f}%</span>"
 
-matriz_fmt = pd.DataFrame([data_dict])
+    matriz_fmt = pd.DataFrame([data_dict])
 
-st.markdown("""
-<style>
-table {
+    st.markdown("""
+    <style>
+    table {
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
     font-size: 7px;
-}
+    }
 
-/* 🔥 CENTRAR HEADERS Y CELDAS BIEN */
-th, td {
+    /* 🔥 CENTRAR HEADERS Y CELDAS BIEN */
+    th, td {
     font-size: 7px !important;
     padding: 0px !important;
     text-align: center !important;
     vertical-align: middle;
-}
+    }
 
-/* 🔥 EVITA EFECTO PEGADO A LA DERECHA */
-th {
+    /* 🔥 EVITA EFECTO PEGADO A LA DERECHA */
+    th {
     font-weight: 500 !important;
     color: #9CA3AF;
     text-align: center !important;
-}
+    }
 
-/* 🔥 fuerza distribución uniforme */
-th, td {
+    /* 🔥 fuerza distribución uniforme */
+    th, td {
     width: calc(100% / 12);
-}
-</style>
-""", unsafe_allow_html=True)
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-# =========================
-# TITULO MINIMO
-# =========================
+    # =========================
+    # TITULO MINIMO
+    # =========================
 
-st.markdown("""
-<div style="
+    st.markdown("""
+    <div style="
     font-size:10px;
     font-weight:500;
     color:#9CA3AF;
     margin-bottom:6px;
     margin-top:10px;
-">
-% vs LE1
-</div>
-""", unsafe_allow_html=True)
-st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
-# =========================
-# RENDER FINAL
-# =========================
+    ">
+    % vs LE1
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
+    # =========================
+    # RENDER FINAL
+    # =========================
 
-st.markdown(
+    st.markdown(
     matriz_fmt.to_html(escape=False, index=False),
     unsafe_allow_html=True
-)
+    )
