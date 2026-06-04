@@ -308,10 +308,6 @@ for m, v in zip(meses, valores):
 
 matriz_fmt = pd.DataFrame([data_dict])
 
-# =========================
-# CSS ULTRA COMPACTO
-# =========================
-
 st.markdown("""
 <style>
 table {
@@ -321,21 +317,24 @@ table {
     font-size: 7px;
 }
 
+/* 🔥 CENTRAR HEADERS Y CELDAS BIEN */
 th, td {
     font-size: 7px !important;
     padding: 0px !important;
-    text-align: center;
-    white-space: nowrap;
+    text-align: center !important;
+    vertical-align: middle;
 }
 
-/* fuerza columnas MUY angostas */
+/* 🔥 EVITA EFECTO PEGADO A LA DERECHA */
+th {
+    font-weight: 500 !important;
+    color: #9CA3AF;
+    text-align: center !important;
+}
+
+/* 🔥 fuerza distribución uniforme */
 th, td {
-    width: 6%;
-}
-
-/* elimina márgenes extra Streamlit */
-.element-container {
-    margin: 0px !important;
+    width: calc(100% / 12);
 }
 </style>
 """, unsafe_allow_html=True)
