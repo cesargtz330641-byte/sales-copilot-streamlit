@@ -1,338 +1,80 @@
 import streamlit as st
 import pandas as pd
-from openai import OpenAI
 
-client = OpenAI(
-    api_key=st.secrets["OPENAI_API_KEY"]
+# =========================
+# CONFIG
+# =========================
+
+st.set_page_config(
+    page_title="Sales Mobile Pro",
+    layout="centered"
 )
 
-# =====================================
-# SEGURIDAD
-# =====================================
+# =========================
+# LOGIN
+# =========================
 
 PASSWORD = "Ventas2026"
 
 password = st.text_input(
-    "🔐 Contraseña",
+    "Ingresa la contraseña",
     type="password"
 )
 
 if password != PASSWORD:
+    st.warning("Acceso restringido")
     st.stop()
 
-# =====================================
-# CONFIG
-# =====================================
-
-st.set_page_config(
-    page_title="Sales Copilot",
-    layout="wide"
-)
-
-# =====================================
-# DATA
-# =====================================
+# =========================
+# CARGA DE DATOS
+# =========================
 
 df = pd.read_excel("ChatBox.xlsx")
 
-# =====================================
-# SESSION
-# =====================================
+# =========================
+# FILTRO YTD 2026
+# =========================
 
-if "page" not in st.session_state:
-    st.session_state.page = "selector"
+data = df[df["Anio"] == 2026].copy()
 
-if "repre" not in st.session_state:
-    st.session_state.repre = None
+# =========================
+# CALCULOS
+# =========================
 
-# =====================================
-# PANTALLA 1
-# =====================================
+venta_ytd = data["Venta"].sum()
 
-if st.session_state.page == "selector":
+obj1_ytd = data["Objetivo 1"].sum()
+obj2_ytd = data["Objetivo 2"].sum()
 
-    st.title("📊 Sales Copilot")
+gap_obj1 = venta_ytd - obj1_ytd
+gap_obj2 = venta_ytd - obj2_ytd
 
-    st.write("Selecciona un representado")
+pct_obj1 = 0 if obj1_ytd == 0 else (gap_obj1 / obj1_ytd) * 100
+pct_obj2 = 0 if obj2_ytd == 0 else (gap_obj2 / obj2_ytd) * 100
 
-    reps = sorted(df["Repre"].dropna().unique())
+# =========================
+# DASHBOARD
+# =========================
 
-    for r in reps:
+st.title("📊 Sales Mobile Pro")
 
-        if st.button(
-            f"📈 {r}",
-            use_container_width=True
-        ):
-            st.session_state.repre = r
-            st.session_state.page = "dashboard"
-            st.rerun()
+st.subheader("Venta YTD 2026")
 
-# =====================================
-# PANTALLA 2
-# =====================================
+st.metric(
+    label="Venta",
+    value=f"${venta_ytd:,.0f}"
+)
 
-if st.session_state.page == "dashboard":
+st.divider()
 
-    data = df[
-        df["Repre"] == st.session_state.repre
-    ].copy()
+st.metric(
+    label="Objetivo 1",
+    value=f"${obj1_ytd:,.0f}",
+    delta=f"{gap_obj1:,.0f} ({pct_obj1:.1f}%)"
+)
 
-    st.title(
-        f"📊 {st.session_state.repre}"
-    )
-
-    st.caption(
-        "Ventas acumuladas YTD 2026"
-    )
-
-    if st.button("⬅ Volver"):
-        st.session_state.page = "selector"
-        st.rerun()
-
-    # =====================================
-    # KPIs
-    # =====================================
-
-    ventas_2026 = data[
-        data["Anio"] == 2026
-    ]["Venta"].sum()
-
-    objetivo_2026 = data[
-        data["Anio"] == 2026
-    ]["Objetivo 1"].sum()
-
-    ventas_2025 = data[
-        data["Anio"] == 2025
-    ]["Venta"].sum()
-
-    gap = ventas_2026 - objetivo_2026
-
-    crecimiento = (
-        (ventas_2026 / ventas_2025) - 1
-        if ventas_2025 > 0
-        else 0
-    )
-
-    st.subheader("📊 KPIs")
-
-    # FILA 1
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.metric(
-            "Ventas YTD 2026",
-            f"${ventas_2026:,.0f}"
-        )
-
-    with col2:
-        st.metric(
-            "Objetivo YTD 2026",
-            f"${objetivo_2026:,.0f}"
-        )
-
-    # FILA 2
-
-    col3, col4 = st.columns(2)
-
-    with col3:
-        st.metric(
-            "Gap YTD",
-            f"${gap:,.0f}"
-        )
-
-    with col4:
-        st.metric(
-            "Crecimiento vs 2025",
-            f"{crecimiento:.1%}"
-        )
-
-    st.divider()
-
-    # =====================================
-    # TENDENCIA
-    # =====================================
-
-    st.subheader("📈 Tendencia mensual")
-
-    ventas_2026_mes = (
-        data[data["Anio"] == 2026]
-        .groupby("Mes")["Venta"]
-        .sum()
-    )
-
-    ventas_2025_mes = (
-        data[data["Anio"] == 2025]
-        .groupby("Mes")["Venta"]
-        .sum()
-    )
-
-    objetivo_mes = (
-        data[data["Anio"] == 2026]
-        .groupby("Mes")["Objetivo 1"]
-        .sum()
-    )
-
-    chart_df = pd.DataFrame({
-        "Ventas 2026": ventas_2026_mes,
-        "Ventas 2025": ventas_2025_mes,
-        "Objetivo 2026": objetivo_mes
-    }).fillna(0)
-
-    st.line_chart(
-        chart_df,
-        use_container_width=True
-    )
-
-    st.divider()
-
-    # =====================================
-    # OPORTUNIDADES
-    # =====================================
-
-    st.subheader("🎯 Oportunidades")
-
-    data_2026 = data[
-        data["Anio"] == 2026
-    ].copy()
-
-    if len(data_2026) == 0:
-
-        st.info(
-            "No existen datos 2026 para este representado."
-        )
-
-    else:
-
-        data_2026["Gap"] = (
-            data_2026["Venta"]
-            - data_2026["Objetivo 1"]
-        )
-
-        gap_region = (
-            data_2026
-            .groupby("Region")["Gap"]
-            .sum()
-            .sort_values()
-        )
-
-        gap_canal = (
-            data_2026
-            .groupby("Canal")["Gap"]
-            .sum()
-            .sort_values()
-        )
-
-        gap_cliente = (
-            data_2026
-            .groupby("Cliente")["Gap"]
-            .sum()
-            .sort_values()
-        )
-
-        peor_region = (
-            gap_region.index[0]
-            if len(gap_region) > 0
-            else "N/A"
-        )
-
-        valor_region = (
-            gap_region.iloc[0]
-            if len(gap_region) > 0
-            else 0
-        )
-
-        peor_canal = (
-            gap_canal.index[0]
-            if len(gap_canal) > 0
-            else "N/A"
-        )
-
-        valor_canal = (
-            gap_canal.iloc[0]
-            if len(gap_canal) > 0
-            else 0
-        )
-
-        peor_cliente = (
-            gap_cliente.index[0]
-            if len(gap_cliente) > 0
-            else "N/A"
-        )
-
-        valor_cliente = (
-            gap_cliente.iloc[0]
-            if len(gap_cliente) > 0
-            else 0
-        )
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.metric(
-                "Mayor Gap Región",
-                peor_region,
-                f"${valor_region:,.0f}"
-            )
-
-        with col2:
-            st.metric(
-                "Mayor Gap Canal",
-                peor_canal,
-                f"${valor_canal:,.0f}"
-            )
-
-        st.metric(
-            "Mayor Gap Cliente",
-            peor_cliente,
-            f"${valor_cliente:,.0f}"
-        )
-        st.divider()
-
-        st.subheader("💬 Sales Copilot")
-
-        pregunta = st.chat_input(
-        "Pregunta algo sobre las ventas"
-    )
-if pregunta:
-
-    with st.spinner("Analizando..."):
-
-        resumen = (
-            data_2026
-            .groupby(
-                ["Cliente", "Region", "Canal"],
-                as_index=False
-            )
-            .agg({
-                "Venta": "sum",
-                "Objetivo 1": "sum"
-            })
-        )
-
-        prompt = f"""
-Representado:
-{st.session_state.repre}
-
-Datos:
-
-{resumen.head(200).to_csv(index=False)}
-
-Pregunta:
-{pregunta}
-
-Responde en español.
-"""
-
-try:
-
-    respuesta = client.responses.create(
-        model="gpt-5-mini",
-        input=prompt
-    )
-
-    st.write(respuesta.output_text)
-
-except Exception as e:
-
-    st.error(f"ERROR: {e}")
+st.metric(
+    label="Objetivo 2",
+    value=f"${obj2_ytd:,.0f}",
+    delta=f"{gap_obj2:,.0f} ({pct_obj2:.1f}%)"
+)
