@@ -146,6 +146,7 @@ if st.session_state.page == "dashboard":
     # =====================================
 
     st.subheader("Tendencia")
+    
 
     meses_orden = [
         "Ene","Feb","Mar","Abr","May","Jun",
@@ -159,31 +160,26 @@ if st.session_state.page == "dashboard":
     }
 
     tendencia = (
-        data
-        .groupby("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
-        .sum()
-        .reset_index()
-    )
+    data
+    .groupby("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
+    .sum()
+    .reset_index()
+)
 
-    # convertir a nombre
-    tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
+tendencia["Mes_num"] = tendencia["Mes"]
 
-    # asegurar todos los meses existen
-    tendencia = (
-        pd.DataFrame({"Mes": meses_orden})
-        .merge(tendencia, on="Mes", how="left")
-        .fillna(0)
-    )
+tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
 
-    # FORZAR orden real
-    tendencia["Mes"] = pd.Categorical(
-        tendencia["Mes"],
-        categories=meses_orden,
-        ordered=True
-    )
+# 🔥 ocultar futuro
+tendencia.loc[tendencia["Mes_num"] > mes_actual, "Venta"] = np.nan
 
-    tendencia = tendencia.sort_values("Mes")
+tendencia = (
+    pd.DataFrame({"Mes": meses_orden})
+    .merge(tendencia, on="Mes", how="left")
+)
 
-    st.line_chart(
-        tendencia.set_index("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
-    )
+tendencia = tendencia.fillna(0)
+
+st.line_chart(
+    tendencia.set_index("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
+)
