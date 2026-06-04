@@ -159,7 +159,7 @@ if st.session_state.page == "dashboard":
     border:1px solid #E5E7EB;
     border-radius:14px;
     padding:10px;
-    max-width:230px;
+    max-width:210px;
     width:100%;
     box-sizing:border-box;
     display:inline-block;
