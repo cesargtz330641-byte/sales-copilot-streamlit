@@ -203,11 +203,11 @@ if st.session_state.page == "dashboard":
 
     from datetime import datetime
 
-    mes_actual = f"{datetime.now().month:02d}"
+mes_actual = datetime.now().month
 
-    tendencia = (
-     data
-     .groupby("Mes")[
+tendencia = (
+    data
+    .groupby("Mes")[
         [
             "Venta",
             "Objetivo 1",
@@ -219,35 +219,35 @@ if st.session_state.page == "dashboard":
     .reset_index()
 )
 
-# Venta no se muestra para meses futuros
+# Ocultar venta en meses futuros
 
-    tendencia.loc[
-      tendencia["Mes"] > mes_actual,
-       "Venta"
-    ] = None
+tendencia.loc[
+    tendencia["Mes"] > mes_actual,
+    "Venta"
+] = None
 
-# Meses amigables
+# Nombres de meses
 
-    meses_nombre = {
-        "01":"Ene",
-      "02":"Feb",
-     "03":"Mar",
-        "04":"Abr",
-        "05":"May",
-        "06":"Jun",
-        "07":"Jul",
-        "08":"Ago",
-        "09":"Sep",
-        "10":"Oct",
-        "11":"Nov",
-        "12":"Dic"
-    }
+meses_nombre = {
+    1: "Ene",
+    2: "Feb",
+    3: "Mar",
+    4: "Abr",
+    5: "May",
+    6: "Jun",
+    7: "Jul",
+    8: "Ago",
+    9: "Sep",
+    10: "Oct",
+    11: "Nov",
+    12: "Dic"
+}
 
-    tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
+tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
 
-    tendencia = tendencia.set_index("Mes")
+tendencia = tendencia.set_index("Mes")
 
-    st.line_chart(
-        tendencia,
-        use_container_width=True
-    )
+st.line_chart(
+    tendencia,
+    use_container_width=True
+)
