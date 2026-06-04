@@ -148,12 +148,13 @@ if st.session_state.page == "dashboard":
     """
 
     components.html(card_html, height=200)
+    st.markdown("<div style='margin-top:-30px'></div>", unsafe_allow_html=True)
 
     # =====================================
     # TENDENCIA
     # =====================================
 
-    st.markdown("<div style='margin-top:-20px'></div>", unsafe_allow_html=True)
+    
     st.markdown("### Evolución mensual")
 
     meses_map = {
