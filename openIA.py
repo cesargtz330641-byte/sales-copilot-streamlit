@@ -43,20 +43,6 @@ if "repre" not in st.session_state:
     st.session_state.repre = None
 
 # =====================================
-# FUNCIONES
-# =====================================
-
-def short_number(x):
-
-    if abs(x) >= 1_000_000:
-        return f"{x/1_000_000:.1f}M"
-
-    if abs(x) >= 1_000:
-        return f"{x/1_000:.1f}K"
-
-    return f"{x:,.0f}"
-
-# =====================================
 # SELECTOR
 # =====================================
 
@@ -64,7 +50,11 @@ if st.session_state.page == "selector":
 
     st.title("📱 Sales Mobile Pro")
 
-    reps = sorted(df["Repre"].dropna().unique())
+    reps = sorted(
+        df["Repre"]
+        .dropna()
+        .unique()
+    )
 
     for r in reps:
 
@@ -91,6 +81,10 @@ if st.session_state.page == "dashboard":
         st.session_state.page = "selector"
         st.rerun()
 
+    # =====================================
+    # KPIs YTD
+    # =====================================
+
     venta = data["Venta"].sum()
 
     obj1 = data["Objetivo 1"].sum()
@@ -106,7 +100,13 @@ if st.session_state.page == "dashboard":
     color2 = "#D9534F" if gap2 < 0 else "#16A34A"
 
     # =====================================
-    # TARJETA MOBILE
+    # TITULO
+    # =====================================
+
+    st.subheader(st.session_state.repre)
+
+    # =====================================
+    # TARJETA
     # =====================================
 
     card_html = f"""
@@ -114,60 +114,77 @@ if st.session_state.page == "dashboard":
         font-family: Arial, sans-serif;
         background:white;
         border:1px solid #E5E7EB;
-        border-radius:24px;
-        padding:16px;
-        margin:0;
+        border-radius:20px;
+        padding:12px;
     ">
-
-        <div style="
-            font-size:16px;
-            color:#666;
-        ">
-            {st.session_state.repre}
-        </div>
 
         <div style="
             font-size:12px;
             color:#999;
-            margin-top:2px;
+            margin-bottom:4px;
         ">
             Volumen YTD 2026
         </div>
 
         <div style="
-            font-size:58px;
+            font-size:42px;
             font-weight:bold;
             color:#1D4ED8;
             line-height:1;
-            margin-top:8px;
-            margin-bottom:12px;
+            margin-bottom:10px;
         ">
-            {short_number(venta)}
+            {venta:,.0f}
         </div>
 
         <div style="
             display:flex;
-            justify-content:space-between;
-            font-size:15px;
-            margin-bottom:6px;
+            gap:8px;
+            font-size:12px;
+            margin-bottom:4px;
+            align-items:center;
+            flex-wrap:wrap;
         ">
-            <span><b>O1</b> {short_number(obj1)}</span>
-            <span style="color:{color1};font-weight:bold;">
-                {short_number(gap1)}
+            <span><b>Objetivo 1</b></span>
+
+            <span>
+                {obj1:,.0f}
             </span>
-            <span>{pct1:.0f}%</span>
+
+            <span style="
+                color:{color1};
+                font-weight:bold;
+            ">
+                {gap1:,.0f}
+            </span>
+
+            <span>
+                {pct1:.0f}%
+            </span>
         </div>
 
         <div style="
             display:flex;
-            justify-content:space-between;
-            font-size:15px;
+            gap:8px;
+            font-size:12px;
+            align-items:center;
+            flex-wrap:wrap;
         ">
-            <span><b>O2</b> {short_number(obj2)}</span>
-            <span style="color:{color2};font-weight:bold;">
-                {short_number(gap2)}
+            <span><b>Objetivo 2</b></span>
+
+            <span>
+                {obj2:,.0f}
             </span>
-            <span>{pct2:.0f}%</span>
+
+            <span style="
+                color:{color2};
+                font-weight:bold;
+            ">
+                {gap2:,.0f}
+            </span>
+
+            <span>
+                {pct2:.0f}%
+            </span>
         </div>
 
     </div>
@@ -175,18 +192,19 @@ if st.session_state.page == "dashboard":
 
     components.html(
         card_html,
-        height=180,
+        height=130,
         scrolling=False
     )
-
-    st.write("")
 
     # =====================================
     # TENDENCIA
     # =====================================
 
+    st.subheader("Tendencia")
+
     tendencia = (
-        data.groupby("Mes")[["Venta", "Objetivo 1"]]
+        data
+        .groupby("Mes")[["Venta", "Objetivo 1"]]
         .sum()
         .sort_index()
     )
