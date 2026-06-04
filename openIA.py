@@ -79,9 +79,15 @@ if st.session_state.page == "dashboard":
         & (df["Anio"] == 2025)
     ].copy()
 
-    if st.button("⬅ Volver"):
-        st.session_state.page = "selector"
-        st.rerun()
+    col1, col2 = st.columns([1, 6])
+
+    with col1:
+        if st.button("⬅", use_container_width=True):
+          st.session_state.page = "selector"
+          st.rerun()
+
+    with col2:
+     st.markdown(" ")
 
     # =====================================
     # MES ACTUAL (YTD LIMIT)
