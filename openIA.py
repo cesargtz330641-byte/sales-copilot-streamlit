@@ -201,72 +201,46 @@ if st.session_state.page == "dashboard":
 
     st.subheader("Tendencia")
 
-    from datetime import datetime
+    import numpy as np
+from datetime import datetime
 
 mes_actual = datetime.now().month
 
 tendencia = (
     data
-    .groupby("Mes")[
-        [
-            "Venta",
-            "Objetivo 1",
-            "Objetivo 2"
-        ]
-    ]
+    .groupby("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
     .sum()
     .reset_index()
 )
 
-# Ocultar venta futura
+# 🔥 Crear estructura completa de 1 a 12 meses (evita “cosas raras”)
+base_meses = pd.DataFrame({"Mes": range(1, 13)})
+tendencia = base_meses.merge(tendencia, on="Mes", how="left")
 
-tendencia.loc[
-    tendencia["Mes"] > mes_actual,
-    "Venta"
-] = None
+# 🔥 Asegurar tipo numérico
+for col in ["Venta", "Objetivo 1", "Objetivo 2"]:
+    tendencia[col] = pd.to_numeric(tendencia[col], errors="coerce")
 
-# Orden correcto
+# 🔥 SOLO ocultar venta futura (NO poner 0)
+tendencia.loc[tendencia["Mes"] > mes_actual, "Venta"] = np.nan
 
-tendencia = tendencia.sort_values("Mes")
-
+# Mapear nombres al final
 meses_nombre = {
-    1: "Ene",
-    2: "Feb",
-    3: "Mar",
-    4: "Abr",
-    5: "May",
-    6: "Jun",
-    7: "Jul",
-    8: "Ago",
-    9: "Sep",
-    10: "Oct",
-    11: "Nov",
-    12: "Dic"
+    1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr",
+    5: "May", 6: "Jun", 7: "Jul", 8: "Ago",
+    9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"
 }
+
+tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
+tendencia = tendencia.set_index("Mes")
 
 orden_meses = [
     "Ene","Feb","Mar","Abr","May","Jun",
     "Jul","Ago","Sep","Oct","Nov","Dic"
 ]
 
-tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
-
-tendencia["Mes"] = pd.Categorical(
-    tendencia["Mes"],
-    categories=orden_meses,
-    ordered=True
-)
-
-tendencia = tendencia.sort_values("Mes")
-
-tendencia = tendencia.set_index("Mes")
+tendencia = tendencia.reindex(orden_meses)
 
 st.line_chart(
-    tendencia[
-        [
-            "Venta",
-            "Objetivo 1",
-            "Objetivo 2"
-        ]
-    ]
+    tendencia[["Venta", "Objetivo 1", "Objetivo 2"]]
 )
