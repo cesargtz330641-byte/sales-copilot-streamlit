@@ -270,45 +270,39 @@ if st.session_state.page == "dashboard":
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
     st.altair_chart(chart, use_container_width=True)
     
-# =========================
-# TABLA DE DESEMPEÑO MENSUAL
+    # =========================
+# MATRIZ MENSUAL (% VS LE1)
 # =========================
 
 tabla = tendencia[["Mes_txt", "Real", "LE1"]].copy()
 
-tabla["Real"] = tabla["Real"].fillna(0)
-tabla["LE1"] = tabla["LE1"].fillna(0)
-
-tabla["% Cumplimiento"] = np.where(
+tabla["% vs LE1"] = np.where(
     tabla["LE1"] == 0,
     np.nan,
-    (tabla["Real"] / tabla["LE1"]) * 100
+    (tabla["Real"] / tabla["LE1"] - 1) * 100
 )
 
-def semaforo(pct):
-    if pd.isna(pct):
-        return "⚪"
-    elif pct >= 100:
-        return "🟢"
-    elif pct >= 90:
-        return "🟠"
-    else:
-        return "🔴"
+# Pivot a formato meses como columnas
+matriz = tabla[["Mes_txt", "% vs LE1"]].set_index("Mes_txt").T
 
-tabla["Status"] = tabla["% Cumplimiento"].apply(semaforo)
+# asegurar orden Ene-Dic
+matriz = matriz[orden_meses]
 
-tabla["Real"] = tabla["Real"].apply(lambda x: f"{x:,.0f}")
-tabla["LE1"] = tabla["LE1"].apply(lambda x: f"{x:,.0f}")
-tabla["% Cumplimiento"] = tabla["% Cumplimiento"].apply(
-    lambda x: "" if pd.isna(x) else f"{x:.1f}%"
-)
+def formato(v):
+    if pd.isna(v):
+        return ""
+    color = "green" if v >= 0 else "red"
+    sign = "+" if v >= 0 else ""
+    return f"{sign}{v:.1f}%"
 
-tabla = tabla[["Mes_txt", "Real", "LE1", "% Cumplimiento", "Status"]]
+matriz_fmt = matriz.copy()
 
-st.markdown("### 📊 Desempeño mensual")
+for col in matriz_fmt.columns:
+    matriz_fmt[col] = matriz_fmt[col].apply(formato)
+
+st.markdown("### 📊 % vs LE1 por mes")
 
 st.dataframe(
-    tabla,
-    use_container_width=True,
-    hide_index=True
+    matriz_fmt,
+    use_container_width=True
 )
