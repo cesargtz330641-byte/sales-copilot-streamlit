@@ -42,42 +42,42 @@ if "repre" not in st.session_state:
     st.session_state.repre = None
 
 # =========================
-# PANTALLA 1
+# SELECTOR
 # =========================
 
 if st.session_state.page == "selector":
 
     st.title("📱 Sales Mobile Pro")
-
     st.write("Selecciona un representado:")
 
     reps = sorted(df["Repre"].dropna().unique())
 
     for r in reps:
-        if st.button(f"📊 {r}", use_container_width=True):
+        if st.button(
+            f"📊 {r}",
+            use_container_width=True
+        ):
             st.session_state.repre = r
             st.session_state.page = "dashboard"
             st.rerun()
 
 # =========================
-# PANTALLA 2
+# DASHBOARD
 # =========================
 
 if st.session_state.page == "dashboard":
 
     data = df[
-        (df["Repre"] == st.session_state.repre)
-        & (df["Anio"] == 2026)
+        (df["Repre"] == st.session_state.repre) &
+        (df["Anio"] == 2026)
     ].copy()
-
-    st.title(f"📊 {st.session_state.repre}")
 
     if st.button("⬅ Volver"):
         st.session_state.page = "selector"
         st.rerun()
 
     # =========================
-    # CALCULOS YTD
+    # CALCULOS
     # =========================
 
     venta_ytd = data["Venta"].sum()
@@ -90,6 +90,12 @@ if st.session_state.page == "dashboard":
 
     pct1 = 0 if obj1_ytd == 0 else (gap1 / obj1_ytd) * 100
     pct2 = 0 if obj2_ytd == 0 else (gap2 / obj2_ytd) * 100
+
+    # =========================
+    # HEADER
+    # =========================
+
+    st.subheader(st.session_state.repre)
 
     # =========================
     # TARJETA PRINCIPAL
@@ -106,23 +112,21 @@ if st.session_state.page == "dashboard":
 
         st.divider()
 
-        c1, c2, c3 = st.columns([1.2, 1, 0.7])
+        col1, col2, col3 = st.columns([1.2, 1, 0.8])
 
-        c1.write("Obj 1")
-        c2.write(f"{gap1:,.0f}")
-        c3.write(f"{pct1:.0f}%")
+        col1.write("Obj1")
+        col2.write(f"{gap1/1000:,.0f}k")
+        col3.write(f"{pct1:.0f}%")
 
-        c1.caption(f"Meta: {obj1_ytd:,.0f}")
+        col1.caption(f"Meta {obj1_ytd:,.0f}")
 
-        st.divider()
+        col1, col2, col3 = st.columns([1.2, 1, 0.8])
 
-        c1, c2, c3 = st.columns([1.2, 1, 0.7])
+        col1.write("Obj2")
+        col2.write(f"{gap2/1000:,.0f}k")
+        col3.write(f"{pct2:.0f}%")
 
-        c1.write("Obj 2")
-        c2.write(f"{gap2:,.0f}")
-        c3.write(f"{pct2:.0f}%")
-
-        c1.caption(f"Meta: {obj2_ytd:,.0f}")
+        col1.caption(f"Meta {obj2_ytd:,.0f}")
 
     # =========================
     # TENDENCIA
@@ -130,10 +134,13 @@ if st.session_state.page == "dashboard":
 
     st.subheader("📈 Tendencia")
 
-    chart = (
+    tendencia = (
         data.groupby("Mes")[["Venta", "Objetivo 1"]]
         .sum()
         .sort_index()
     )
 
-    st.line_chart(chart)
+    st.line_chart(
+        tendencia,
+        use_container_width=True
+    )
