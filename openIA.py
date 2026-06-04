@@ -271,37 +271,42 @@ if st.session_state.page == "dashboard":
     st.altair_chart(chart, use_container_width=True)
     
    
+
 # =========================
-# SOLO % VS LE1 (ULTRA COMPACTO SIN PRIMERA COLUMNA)
+# SOLO % VS LE1 (SIN PRIMERA COLUMNA)
 # =========================
 
 tabla = tendencia[["Mes_txt", "Mes", "Real", "LE1"]].copy()
 
-# solo meses reales
 tabla = tabla[tabla["Mes"] <= mes_actual]
 
-# % vs LE1
 tabla["% vs LE1"] = np.where(
     tabla["LE1"] == 0,
     np.nan,
     (tabla["Real"] / tabla["LE1"] - 1) * 100
 )
 
-# orden correcto de meses
-tabla = tabla.set_index("Mes_txt").reindex(orden_meses[:mes_actual]).reset_index()
+# ordenar meses correctamente
+tabla = tabla.sort_values("Mes")
 
 # =========================
-# FORMATO VISUAL
+# CONSTRUCCIÓN LIMPIA (CLAVE)
 # =========================
 
-def fmt(v):
+meses = tabla["Mes_txt"].tolist()
+valores = tabla["% vs LE1"].tolist()
+
+data_dict = {}
+
+for m, v in zip(meses, valores):
     if pd.isna(v):
-        return ""
-    color = "#16A34A" if v >= 0 else "#EF4444"
-    sign = "+" if v >= 0 else ""
-    return f"<span style='color:{color};font-size:8px;font-weight:600'>{sign}{v:.0f}%</span>"
+        data_dict[m] = ""
+    else:
+        color = "#16A34A" if v >= 0 else "#EF4444"
+        sign = "+" if v >= 0 else ""
+        data_dict[m] = f"<span style='color:{color};font-size:8px;font-weight:600'>{sign}{v:.0f}%</span>"
 
-matriz_fmt = pd.DataFrame([tabla["% vs LE1"].apply(fmt).values], columns=tabla["Mes_txt"])
+matriz_fmt = pd.DataFrame([data_dict])
 
 # =========================
 # CSS ULTRA COMPACTO
@@ -323,21 +328,20 @@ th, td {
     white-space: nowrap;
 }
 
-/* columnas extremadamente angostas */
+/* fuerza columnas MUY angostas */
 th, td {
     width: 6%;
 }
 
-/* quitar márgenes de contenedor */
+/* elimina márgenes extra Streamlit */
 .element-container {
-    margin-top: 0px !important;
-    margin-bottom: 0px !important;
+    margin: 0px !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # =========================
-# TÍTULO MINIMAL
+# TITULO MINIMO
 # =========================
 
 st.markdown(
@@ -346,7 +350,7 @@ st.markdown(
 )
 
 # =========================
-# RENDER SIN PRIMERA COLUMNA
+# RENDER FINAL
 # =========================
 
 st.markdown(
