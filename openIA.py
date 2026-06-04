@@ -1,6 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
+from datetime import datetime
 
 # =====================================
 # CONFIG
@@ -22,10 +23,7 @@ if "authenticated" not in st.session_state:
 
 if not st.session_state.authenticated:
 
-    password = st.text_input(
-        "Ingresa la contraseña",
-        type="password"
-    )
+    password = st.text_input("Ingresa la contraseña", type="password")
 
     if password == PASSWORD:
         st.session_state.authenticated = True
@@ -58,18 +56,10 @@ if st.session_state.page == "selector":
 
     st.title("📱 Sales Mobile Pro")
 
-    reps = sorted(
-        df["Repre"]
-        .dropna()
-        .unique()
-    )
+    reps = sorted(df["Repre"].dropna().unique())
 
     for r in reps:
-
-        if st.button(
-            f"📊 {r}",
-            use_container_width=True
-        ):
+        if st.button(f"📊 {r}", use_container_width=True):
             st.session_state.repre = r
             st.session_state.page = "dashboard"
             st.rerun()
@@ -89,8 +79,11 @@ if st.session_state.page == "dashboard":
         st.session_state.page = "selector"
         st.rerun()
 
-    venta = data["Venta"].sum()
+    # =====================================
+    # KPIs
+    # =====================================
 
+    venta = data["Venta"].sum()
     obj1 = data["Objetivo 1"].sum()
     obj2 = data["Objetivo 2"].sum()
 
@@ -115,11 +108,7 @@ if st.session_state.page == "dashboard":
         display:inline-block;
     ">
 
-        <div style="
-            font-size:12px;
-            color:#999;
-            margin-bottom:4px;
-        ">
+        <div style="font-size:12px;color:#999;margin-bottom:4px;">
             Volumen YTD 2026
         </div>
 
@@ -133,110 +122,68 @@ if st.session_state.page == "dashboard":
             {venta:,.0f}
         </div>
 
-        <div style="
-            display:flex;
-            gap:8px;
-            font-size:12px;
-            margin-bottom:4px;
-            align-items:center;
-            flex-wrap:wrap;
-        ">
+        <div style="display:flex;gap:8px;font-size:12px;margin-bottom:4px;flex-wrap:wrap;">
             <span><b>Objetivo 1</b></span>
-
-            <span>
-                {obj1:,.0f}
-            </span>
-
-            <span style="
-                color:{color1};
-                font-weight:bold;
-            ">
-                {gap1:,.0f}
-            </span>
-
-            <span style="
-                color:{color1};
-                font-weight:bold;
-            ">
-                {pct1:.0f}%
-            </span>
+            <span>{obj1:,.0f}</span>
+            <span style="color:{color1};font-weight:bold;">{gap1:,.0f}</span>
+            <span style="color:{color1};font-weight:bold;">{pct1:.0f}%</span>
         </div>
 
-        <div style="
-            display:flex;
-            gap:8px;
-            font-size:12px;
-            align-items:center;
-            flex-wrap:wrap;
-        ">
+        <div style="display:flex;gap:8px;font-size:12px;flex-wrap:wrap;">
             <span><b>Objetivo 2</b></span>
-
-            <span>
-                {obj2:,.0f}
-            </span>
-
-            <span style="
-                color:{color2};
-                font-weight:bold;
-            ">
-                {gap2:,.0f}
-            </span>
-
-            <span style="
-                color:{color2};
-                font-weight:bold;
-            ">
-                {pct2:.0f}%
-            </span>
+            <span>{obj2:,.0f}</span>
+            <span style="color:{color2};font-weight:bold;">{gap2:,.0f}</span>
+            <span style="color:{color2};font-weight:bold;">{pct2:.0f}%</span>
         </div>
 
     </div>
     """
 
-    components.html(
-        card_html,
-        height=140,
-        scrolling=False
-    )
+    components.html(card_html, height=140, scrolling=False)
+
+    # =====================================
+    # TENDENCIA (CORREGIDA)
+    # =====================================
 
     st.subheader("Tendencia")
 
-    import pandas as pd
-from datetime import datetime
+    meses_orden = [
+        "Ene","Feb","Mar","Abr","May","Jun",
+        "Jul","Ago","Sep","Oct","Nov","Dic"
+    ]
 
-mes_actual = datetime.now().month
+    meses_nombre = {
+        1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr",
+        5: "May", 6: "Jun", 7: "Jul", 8: "Ago",
+        9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"
+    }
 
-tendencia = (
-    data
-    .groupby("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
-    .sum()
-    .reset_index()
-)
+    tendencia = (
+        data
+        .groupby("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
+        .sum()
+        .reset_index()
+    )
 
-meses_nombre = {
-    1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr",
-    5: "May", 6: "Jun", 7: "Jul", 8: "Ago",
-    9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"
-}
+    # convertir a nombre
+    tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
 
-orden_meses = [
-    "Ene","Feb","Mar","Abr","May","Jun",
-    "Jul","Ago","Sep","Oct","Nov","Dic"
-]
+    # asegurar todos los meses existen
+    tendencia = (
+        pd.DataFrame({"Mes": meses_orden})
+        .merge(tendencia, on="Mes", how="left")
+        .fillna(0)
+    )
 
-# Convertir número → texto
-tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
+    # FORZAR orden real
+    tendencia["Mes"] = pd.Categorical(
+        tendencia["Mes"],
+        categories=meses_orden,
+        ordered=True
+    )
 
-# 🔥 CLAVE: forzar orden REAL (no alfabético)
-cat_type = pd.CategoricalDtype(categories=orden_meses, ordered=True)
-tendencia["Mes"] = tendencia["Mes"].astype(cat_type)
+    tendencia = tendencia.sort_values("Mes")
 
-# Ordenar correctamente
-tendencia = tendencia.sort_values("Mes")
-
-# Completar meses faltantes con 0
-tendencia = tendencia.set_index("Mes").reindex(orden_meses).fillna(0)
-
-st.line_chart(
-    tendencia[["Venta", "Objetivo 1", "Objetivo 2"]]
-)
+    st.line_chart(
+        tendencia.set_index("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
+    )
