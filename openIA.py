@@ -271,60 +271,64 @@ if st.session_state.page == "dashboard":
     st.altair_chart(chart, use_container_width=True)
     
     # =========================
-    # MATRIZ % VS LE1 (COMPACTA)
-    # =========================
-
-    tabla = tendencia[["Mes_txt", "Mes", "Real", "LE1"]].copy()
-
-    # solo meses reales
-    tabla = tabla[tabla["Mes"] <= mes_actual]
-
-    tabla["% vs LE1"] = np.where(
-     tabla["LE1"] == 0,
-      np.nan,
-      (tabla["Real"] / tabla["LE1"] - 1) * 100
-    )
-
-    # pivot
-    matriz = tabla[["Mes_txt", "% vs LE1"]].set_index("Mes_txt").T
-
-    matriz = matriz[orden_meses[:mes_actual]]
-
-    # formato compacto (0 decimales + colores)
-    def formato(v):
-     if pd.isna(v):
-          return ""
-
-     sign = "+" if v >= 0 else ""
-     color = "#16A34A" if v >= 0 else "#EF4444"
-
-     return f"<span style='color:{color};font-size:10px;font-weight:600'>{sign}{v:.0f}%</span>"
-
-    matriz_fmt = matriz.copy()
-
-    for col in matriz_fmt.columns:
-     matriz_fmt[col] = matriz_fmt[col].apply(formato)
-
-# =========================
-# CSS ULTRA COMPACTO
+# SOLO % VS LE1 (ULTRA COMPACTO)
 # =========================
 
-    st.markdown("""
-    <style>
-    div[data-testid="stDataFrame"] {
-     font-size: 10px !important;
-    }
+tabla = tendencia[["Mes_txt", "Mes", "Real", "LE1"]].copy()
 
-    h3 {
-     font-size: 12px !important;
-     margin-bottom: 4px !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# solo meses reales
+tabla = tabla[tabla["Mes"] <= mes_actual]
 
-    st.markdown("### 📊 % vs LE1 (Mensual)")
+tabla["% vs LE1"] = np.where(
+    tabla["LE1"] == 0,
+    np.nan,
+    (tabla["Real"] / tabla["LE1"] - 1) * 100
+)
 
-    st.write(
-     matriz_fmt.to_html(escape=False),
-     unsafe_allow_html=True
-    )
+# pivot SOLO %
+matriz = tabla[["Mes_txt", "% vs LE1"]].set_index("Mes_txt").T
+matriz = matriz[orden_meses[:mes_actual]]
+
+# formato ultra compacto
+def fmt(v):
+    if pd.isna(v):
+        return ""
+    color = "#16A34A" if v >= 0 else "#EF4444"
+    sign = "+" if v >= 0 else ""
+    return f"<span style='color:{color};font-size:9px;font-weight:600'>{sign}{v:.0f}%</span>"
+
+matriz_fmt = matriz.copy()
+
+for col in matriz_fmt.columns:
+    matriz_fmt[col] = matriz_fmt[col].apply(fmt)
+
+# =========================
+# CSS ULTRA MINIMAL
+# =========================
+
+st.markdown("""
+<style>
+h3 {
+    font-size: 11px !important;
+    margin: 2px 0px !important;
+    font-weight: 500 !important;
+    color: #9CA3AF !important;
+}
+
+div[data-testid="stDataFrame"] {
+    font-size: 9px !important;
+}
+
+.element-container {
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("📊 % vs LE1")
+
+st.write(
+    matriz_fmt.to_html(escape=False),
+    unsafe_allow_html=True
+)
