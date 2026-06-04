@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import pandas as pd
 
 # =====================================
@@ -9,73 +10,6 @@ st.set_page_config(
     page_title="Sales Mobile Pro",
     layout="centered"
 )
-
-# =====================================
-# CSS MOBILE
-# =====================================
-
-st.markdown("""
-<style>
-
-/* Reduce espacios de Streamlit */
-.block-container {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-}
-
-/* Tarjeta */
-.card {
-    background: white;
-    border: 1px solid #E5E7EB;
-    border-radius: 24px;
-    padding: 16px;
-    margin-bottom: 12px;
-}
-
-/* Nombre representante */
-.rep {
-    font-size: 16px;
-    color: #666;
-    margin-bottom: 0px;
-}
-
-/* Subtitulo */
-.sub {
-    font-size: 12px;
-    color: #999;
-    margin-bottom: 6px;
-}
-
-/* Numero principal */
-.venta {
-    font-size: 56px;
-    font-weight: 700;
-    color: #1D4ED8;
-    line-height: 1;
-    margin-bottom: 10px;
-}
-
-/* Filas de objetivos */
-.row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 15px;
-    padding-top: 4px;
-    padding-bottom: 4px;
-}
-
-.negativo {
-    color: #DC2626;
-    font-weight: 600;
-}
-
-.positivo {
-    color: #16A34A;
-    font-weight: 600;
-}
-
-</style>
-""", unsafe_allow_html=True)
 
 # =====================================
 # LOGIN
@@ -130,11 +64,7 @@ if st.session_state.page == "selector":
 
     st.title("📱 Sales Mobile Pro")
 
-    reps = sorted(
-        df["Repre"]
-        .dropna()
-        .unique()
-    )
+    reps = sorted(df["Repre"].dropna().unique())
 
     for r in reps:
 
@@ -153,17 +83,13 @@ if st.session_state.page == "selector":
 if st.session_state.page == "dashboard":
 
     data = df[
-        (df["Repre"] == st.session_state.repre) &
-        (df["Anio"] == 2026)
+        (df["Repre"] == st.session_state.repre)
+        & (df["Anio"] == 2026)
     ].copy()
 
     if st.button("⬅ Volver"):
         st.session_state.page = "selector"
         st.rerun()
-
-    # =====================================
-    # KPIs
-    # =====================================
 
     venta = data["Venta"].sum()
 
@@ -176,58 +102,91 @@ if st.session_state.page == "dashboard":
     pct1 = 0 if obj1 == 0 else (gap1 / obj1) * 100
     pct2 = 0 if obj2 == 0 else (gap2 / obj2) * 100
 
-    clase1 = "positivo" if gap1 >= 0 else "negativo"
-    clase2 = "positivo" if gap2 >= 0 else "negativo"
+    color1 = "#D9534F" if gap1 < 0 else "#16A34A"
+    color2 = "#D9534F" if gap2 < 0 else "#16A34A"
 
     # =====================================
-    # TARJETA
+    # TARJETA MOBILE
     # =====================================
 
-    st.markdown(f"""
-    <div class="card">
+    card_html = f"""
+    <div style="
+        font-family: Arial, sans-serif;
+        background:white;
+        border:1px solid #E5E7EB;
+        border-radius:24px;
+        padding:16px;
+        margin:0;
+    ">
 
-        <div class="rep">
+        <div style="
+            font-size:16px;
+            color:#666;
+        ">
             {st.session_state.repre}
         </div>
 
-        <div class="sub">
+        <div style="
+            font-size:12px;
+            color:#999;
+            margin-top:2px;
+        ">
             Volumen YTD 2026
         </div>
 
-        <div class="venta">
+        <div style="
+            font-size:58px;
+            font-weight:bold;
+            color:#1D4ED8;
+            line-height:1;
+            margin-top:8px;
+            margin-bottom:12px;
+        ">
             {short_number(venta)}
         </div>
 
-        <div class="row">
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            font-size:15px;
+            margin-bottom:6px;
+        ">
             <span><b>O1</b> {short_number(obj1)}</span>
-            <span class="{clase1}">
+            <span style="color:{color1};font-weight:bold;">
                 {short_number(gap1)}
             </span>
-            <span>
-                {pct1:.0f}%
-            </span>
+            <span>{pct1:.0f}%</span>
         </div>
 
-        <div class="row">
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            font-size:15px;
+        ">
             <span><b>O2</b> {short_number(obj2)}</span>
-            <span class="{clase2}">
+            <span style="color:{color2};font-weight:bold;">
                 {short_number(gap2)}
             </span>
-            <span>
-                {pct2:.0f}%
-            </span>
+            <span>{pct2:.0f}%</span>
         </div>
 
     </div>
-    """, unsafe_allow_html=True)
+    """
+
+    components.html(
+        card_html,
+        height=180,
+        scrolling=False
+    )
+
+    st.write("")
 
     # =====================================
     # TENDENCIA
     # =====================================
 
     tendencia = (
-        data
-        .groupby("Mes")[["Venta", "Objetivo 1"]]
+        data.groupby("Mes")[["Venta", "Objetivo 1"]]
         .sum()
         .sort_index()
     )
