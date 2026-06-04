@@ -258,3 +258,4 @@ if st.session_state.page == "dashboard":
     )
 
     st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+    st.altair_chart(chart, use_container_width=True)
