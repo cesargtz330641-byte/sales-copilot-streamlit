@@ -84,13 +84,14 @@ if "repre" not in st.session_state:
 # =====================================
 # SELECTOR (GRID 2 COLUMNAS)
 # =====================================
-st.markdown(
-    "<div style='font-size:13px;color:#9CA3AF;margin-bottom:8px;'>Selecciona un representante</div>",
-    unsafe_allow_html=True
-)
+
 if st.session_state.page == "selector":
 
     st.markdown("### 📊 App Representados")
+    st.markdown(
+    "<div style='font-size:13px;color:#9CA3AF;margin-bottom:8px;'>Selecciona un representante</div>",
+    unsafe_allow_html=True
+)
 
     cols = st.columns(2)
 
