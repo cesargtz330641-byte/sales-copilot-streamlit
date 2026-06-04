@@ -282,7 +282,7 @@ chart = alt.Chart(base).mark_line(size=2.5).encode(
         scale=color_scale,
         legend=alt.Legend(
             title=None,
-            orient="right"   # 👈 AQUÍ CAMBIA EL LUGAR
+            orient="bottom"   # 👈 AQUÍ CAMBIA EL LUGAR
         )
     )
 )
