@@ -24,7 +24,10 @@ if "authenticated" not in st.session_state:
 
 if not st.session_state.authenticated:
 
-    password = st.text_input("Ingresa la contraseña", type="password")
+    password = st.text_input(
+        "Ingresa la contraseña",
+        type="password"
+    )
 
     if password == PASSWORD:
         st.session_state.authenticated = True
@@ -60,7 +63,11 @@ if st.session_state.page == "selector":
     reps = sorted(df["Repre"].dropna().unique())
 
     for r in reps:
-        if st.button(f"📊 {r}", use_container_width=True):
+
+        if st.button(
+            f"📊 {r}",
+            use_container_width=True
+        ):
             st.session_state.repre = r
             st.session_state.page = "dashboard"
             st.rerun()
@@ -80,11 +87,8 @@ if st.session_state.page == "dashboard":
         st.session_state.page = "selector"
         st.rerun()
 
-    # =====================================
-    # KPIs
-    # =====================================
-
     venta = data["Venta"].sum()
+
     obj1 = data["Objetivo 1"].sum()
     obj2 = data["Objetivo 2"].sum()
 
@@ -109,7 +113,11 @@ if st.session_state.page == "dashboard":
         display:inline-block;
     ">
 
-        <div style="font-size:12px;color:#999;margin-bottom:4px;">
+        <div style="
+            font-size:12px;
+            color:#999;
+            margin-bottom:4px;
+        ">
             Volumen YTD 2026
         </div>
 
@@ -123,18 +131,39 @@ if st.session_state.page == "dashboard":
             {venta:,.0f}
         </div>
 
-        <div style="display:flex;gap:8px;font-size:12px;margin-bottom:4px;flex-wrap:wrap;">
+        <div style="
+            display:flex;
+            gap:8px;
+            font-size:12px;
+            margin-bottom:4px;
+            align-items:center;
+            flex-wrap:wrap;
+        ">
             <span><b>Objetivo 1</b></span>
             <span>{obj1:,.0f}</span>
-            <span style="color:{color1};font-weight:bold;">{gap1:,.0f}</span>
-            <span style="color:{color1};font-weight:bold;">{pct1:.0f}%</span>
+            <span style="color:{color1};font-weight:bold;">
+                {gap1:,.0f}
+            </span>
+            <span style="color:{color1};font-weight:bold;">
+                {pct1:.0f}%
+            </span>
         </div>
 
-        <div style="display:flex;gap:8px;font-size:12px;flex-wrap:wrap;">
+        <div style="
+            display:flex;
+            gap:8px;
+            font-size:12px;
+            align-items:center;
+            flex-wrap:wrap;
+        ">
             <span><b>Objetivo 2</b></span>
             <span>{obj2:,.0f}</span>
-            <span style="color:{color2};font-weight:bold;">{gap2:,.0f}</span>
-            <span style="color:{color2};font-weight:bold;">{pct2:.0f}%</span>
+            <span style="color:{color2};font-weight:bold;">
+                {gap2:,.0f}
+            </span>
+            <span style="color:{color2};font-weight:bold;">
+                {pct2:.0f}%
+            </span>
         </div>
 
     </div>
@@ -143,61 +172,54 @@ if st.session_state.page == "dashboard":
     components.html(card_html, height=140, scrolling=False)
 
     # =====================================
-    # TENDENCIA
+    # TENDENCIA (CORREGIDA BIEN)
     # =====================================
 
     st.subheader("Tendencia")
 
     mes_actual = datetime.now().month
 
-meses_nombre = {
-    1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr",
-    5: "May", 6: "Jun", 7: "Jul", 8: "Ago",
-    9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"
-}
+    meses_nombre = {
+        1:"Ene",2:"Feb",3:"Mar",4:"Abr",
+        5:"May",6:"Jun",7:"Jul",8:"Ago",
+        9:"Sep",10:"Oct",11:"Nov",12:"Dic"
+    }
 
-orden_meses = list(meses_nombre.values())
+    orden_meses = [
+        "Ene","Feb","Mar","Abr","May","Jun",
+        "Jul","Ago","Sep","Oct","Nov","Dic"
+    ]
 
-# =========================
-# AGRUPAR
-# =========================
-tendencia = (
-    data
-    .groupby("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
-    .sum()
-    .reset_index()
-)
+    tendencia = (
+        data
+        .groupby("Mes")[["Venta","Objetivo 1","Objetivo 2"]]
+        .sum()
+        .reset_index()
+    )
 
-# =========================
-# MANTENER MES NUMÉRICO
-# =========================
-tendencia = tendencia.rename(columns={"Mes": "Mes_num"})
+    # mantener control numérico
+    tendencia["Mes_num"] = tendencia["Mes"]
 
-# =========================
-# MAPEAR A NOMBRE
-# =========================
-tendencia["Mes"] = tendencia["Mes_num"].map(meses_nombre)
+    # map a nombre
+    tendencia["Mes"] = tendencia["Mes_num"].map(meses_nombre)
 
-# =========================
-# FORZAR ORDEN FIJO (SIN ALFABETO)
-# =========================
-tendencia = tendencia.set_index("Mes").reindex(orden_meses).reset_index()
+    # ordenar correcto por número (NO alfabético)
+    tendencia = tendencia.sort_values("Mes_num")
 
-# =========================
-# 🔥 CLAVE: NO 0 EN FUTURO
-# =========================
-tendencia["Venta"] = tendencia["Venta"].where(
-    tendencia.index < mes_actual,
-    np.nan
-)
+    # 🔥 CLAVE: venta futura en blanco (no 0)
+    tendencia["Venta"] = tendencia["Venta"].where(
+        tendencia["Mes_num"] <= mes_actual
+    )
 
-# objetivos sí pueden quedarse completos
-tendencia["Objetivo 1"] = tendencia["Objetivo 1"].fillna(0)
-tendencia["Objetivo 2"] = tendencia["Objetivo 2"].fillna(0)
+    # reindex seguro a los 12 meses
+    base = pd.DataFrame({"Mes": orden_meses})
 
-# =========================
-# GRAFICAR
-# =========================
-st.line_chart(
-    tendencia.set_index("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
-)
+    tendencia = base.merge(
+        tendencia[["Mes","Venta","Objetivo 1","Objetivo 2"]],
+        on="Mes",
+        how="left"
+    )
+
+    st.line_chart(
+        tendencia.set_index("Mes")[["Venta","Objetivo 1","Objetivo 2"]]
+    )
