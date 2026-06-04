@@ -146,7 +146,9 @@ if st.session_state.page == "dashboard":
     # =====================================
 
     st.subheader("Tendencia")
-    
+    from datetime import datetime
+
+    mes_actual = datetime.now().month
 
     meses_orden = [
         "Ene","Feb","Mar","Abr","May","Jun",
@@ -166,16 +168,19 @@ if st.session_state.page == "dashboard":
     .reset_index()
 )
 
+# 🔥 guardar mes numérico ANTES de cualquier cambio
 tendencia["Mes_num"] = tendencia["Mes"]
 
-tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
-
-# 🔥 ocultar futuro
+# 🔥 ocultar ventas futuras
 tendencia.loc[tendencia["Mes_num"] > mes_actual, "Venta"] = np.nan
 
+# 🔥 convertir a nombre SOLO al final
+tendencia["Mes"] = tendencia["Mes_num"].map(meses_nombre)
+
+# 🔥 asegurar estructura completa Ene–Dic
 tendencia = (
     pd.DataFrame({"Mes": meses_orden})
-    .merge(tendencia, on="Mes", how="left")
+    .merge(tendencia[["Mes", "Venta", "Objetivo 1", "Objetivo 2"]], on="Mes", how="left")
 )
 
 tendencia = tendencia.fillna(0)
