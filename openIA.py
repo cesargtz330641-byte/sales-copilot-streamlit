@@ -200,7 +200,7 @@ if st.session_state.page == "dashboard":
     # TENDENCIA (CORRECTA)
     # =====================================
 
-    st.markdown("<div style='height:13px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
     meses_map = {
         1:"Ene",2:"Feb",3:"Mar",4:"Abr",
         5:"May",6:"Jun",7:"Jul",8:"Ago",
