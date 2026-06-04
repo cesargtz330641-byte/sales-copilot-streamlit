@@ -244,7 +244,7 @@ if st.session_state.page == "dashboard":
 
     color_scale = alt.Scale(
         domain=["Volumen 2026", "LE1", "Volumen 2025"],
-        range=["#2563EB", "#22C55E", "#9CA3AF"]
+        range=["#2563EB", "#F59E0B", "#9CA3AF"]
     )
 
     chart = alt.Chart(base).mark_line(size=2.5).encode(
