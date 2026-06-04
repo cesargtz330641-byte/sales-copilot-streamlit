@@ -270,37 +270,41 @@ if st.session_state.page == "dashboard":
     st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
     st.altair_chart(chart, use_container_width=True)
     
-   # =========================
-# SOLO % VS LE1 (ULTRA COMPACTO)
+   
+# =========================
+# SOLO % VS LE1 (ULTRA COMPACTO SIN PRIMERA COLUMNA)
 # =========================
 
 tabla = tendencia[["Mes_txt", "Mes", "Real", "LE1"]].copy()
 
+# solo meses reales
 tabla = tabla[tabla["Mes"] <= mes_actual]
 
+# % vs LE1
 tabla["% vs LE1"] = np.where(
     tabla["LE1"] == 0,
     np.nan,
     (tabla["Real"] / tabla["LE1"] - 1) * 100
 )
 
-matriz = tabla[["Mes_txt", "% vs LE1"]].set_index("Mes_txt").T
-matriz = matriz[orden_meses[:mes_actual]]
+# orden correcto de meses
+tabla = tabla.set_index("Mes_txt").reindex(orden_meses[:mes_actual]).reset_index()
+
+# =========================
+# FORMATO VISUAL
+# =========================
 
 def fmt(v):
     if pd.isna(v):
         return ""
     color = "#16A34A" if v >= 0 else "#EF4444"
     sign = "+" if v >= 0 else ""
-    return f"<span style='color:{color};font-size:9px;font-weight:600'>{sign}{v:.0f}%</span>"
+    return f"<span style='color:{color};font-size:8px;font-weight:600'>{sign}{v:.0f}%</span>"
 
-matriz_fmt = matriz.copy()
-
-for col in matriz_fmt.columns:
-    matriz_fmt[col] = matriz_fmt[col].apply(fmt)
+matriz_fmt = pd.DataFrame([tabla["% vs LE1"].apply(fmt).values], columns=tabla["Mes_txt"])
 
 # =========================
-# CSS
+# CSS ULTRA COMPACTO
 # =========================
 
 st.markdown("""
@@ -309,38 +313,43 @@ table {
     width: 100%;
     table-layout: fixed;
     border-collapse: collapse;
-    font-size: 8px;
+    font-size: 7px;
 }
 
 th, td {
-    font-size: 8px !important;
+    font-size: 7px !important;
+    padding: 0px !important;
     text-align: center;
-    padding: 1px !important;
     white-space: nowrap;
 }
 
-th {
-    font-weight: 500 !important;
-    color: #9CA3AF;
+/* columnas extremadamente angostas */
+th, td {
+    width: 6%;
 }
 
-td {
-    max-width: 35px;
+/* quitar márgenes de contenedor */
+.element-container {
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # =========================
-# TITULO
-# =========================
-
-st.markdown("📊 % vs LE1")
-
-# =========================
-# RENDER DE TABLA (ESTO TE FALTABA)
+# TÍTULO MINIMAL
 # =========================
 
 st.markdown(
-    matriz_fmt.to_html(escape=False),
+    "<div style='font-size:9px;color:#9CA3AF;margin:2px 0;'>% vs LE1</div>",
+    unsafe_allow_html=True
+)
+
+# =========================
+# RENDER SIN PRIMERA COLUMNA
+# =========================
+
+st.markdown(
+    matriz_fmt.to_html(escape=False, index=False),
     unsafe_allow_html=True
 )
