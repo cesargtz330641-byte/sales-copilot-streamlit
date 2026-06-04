@@ -89,7 +89,7 @@ if st.session_state.page == "selector":
 
     st.markdown("### 📊 App Representados")
     st.markdown(
-    "<div style='font-size:13px;color:#9CA3AF;margin-bottom:8px;'>Selecciona un representante</div>",
+    "<div style='font-size:20px;color:#9CA3AF;margin-bottom:8px;'>Selecciona un representante</div>",
     unsafe_allow_html=True
 )
 
