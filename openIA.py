@@ -190,7 +190,7 @@ if st.session_state.page == "dashboard":
     # =====================================
     # TÍTULO GRÁFICO
     # =====================================
-
+    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
     st.markdown(
     "<div style='font-size:14px;font-weight:600;margin:0;color:#9CA3AF;'>Evolución mensual (K)</div>",
     unsafe_allow_html=True
