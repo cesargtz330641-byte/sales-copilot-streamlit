@@ -150,45 +150,54 @@ if st.session_state.page == "dashboard":
 
     mes_actual = datetime.now().month
 
-    meses_orden = [
-        "Ene","Feb","Mar","Abr","May","Jun",
-        "Jul","Ago","Sep","Oct","Nov","Dic"
-    ]
+meses_nombre = {
+    1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr",
+    5: "May", 6: "Jun", 7: "Jul", 8: "Ago",
+    9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"
+}
 
-    meses_nombre = {
-        1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr",
-        5: "May", 6: "Jun", 7: "Jul", 8: "Ago",
-        9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"
-    }
+orden_meses = list(meses_nombre.values())
 
-    tendencia = (
-        data
-        .groupby("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
-        .sum()
-        .reset_index()
-    )
+# =========================
+# AGRUPAR
+# =========================
+tendencia = (
+    data
+    .groupby("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
+    .sum()
+    .reset_index()
+)
 
-    tendencia["Mes_num"] = tendencia["Mes"]
+# =========================
+# MANTENER MES NUMÉRICO
+# =========================
+tendencia = tendencia.rename(columns={"Mes": "Mes_num"})
 
-    # ocultar venta futura (NO 0, NO caída)
-    tendencia.loc[
-        tendencia["Mes_num"] > mes_actual,
-        "Venta"
-    ] = np.nan
+# =========================
+# MAPEAR A NOMBRE
+# =========================
+tendencia["Mes"] = tendencia["Mes_num"].map(meses_nombre)
 
-    tendencia["Mes"] = tendencia["Mes_num"].map(meses_nombre)
+# =========================
+# FORZAR ORDEN FIJO (SIN ALFABETO)
+# =========================
+tendencia = tendencia.set_index("Mes").reindex(orden_meses).reset_index()
 
-    tendencia = (
-        pd.DataFrame({"Mes": meses_orden})
-        .merge(
-            tendencia[["Mes", "Venta", "Objetivo 1", "Objetivo 2"]],
-            on="Mes",
-            how="left"
-        )
-    )
+# =========================
+# 🔥 CLAVE: NO 0 EN FUTURO
+# =========================
+tendencia["Venta"] = tendencia["Venta"].where(
+    tendencia.index < mes_actual,
+    np.nan
+)
 
-    tendencia = tendencia.fillna(0)
+# objetivos sí pueden quedarse completos
+tendencia["Objetivo 1"] = tendencia["Objetivo 1"].fillna(0)
+tendencia["Objetivo 2"] = tendencia["Objetivo 2"].fillna(0)
 
-    st.line_chart(
-        tendencia.set_index("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
-    )
+# =========================
+# GRAFICAR
+# =========================
+st.line_chart(
+    tendencia.set_index("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
+)
