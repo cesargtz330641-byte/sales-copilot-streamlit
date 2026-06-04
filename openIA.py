@@ -179,47 +179,53 @@ if st.session_state.page == "dashboard":
 
     mes_actual = datetime.now().month
 
-    meses_nombre = {
-        1:"Ene",2:"Feb",3:"Mar",4:"Abr",
-        5:"May",6:"Jun",7:"Jul",8:"Ago",
-        9:"Sep",10:"Oct",11:"Nov",12:"Dic"
-    }
+meses_nombre = {
+    1:"Ene",2:"Feb",3:"Mar",4:"Abr",
+    5:"May",6:"Jun",7:"Jul",8:"Ago",
+    9:"Sep",10:"Oct",11:"Nov",12:"Dic"
+}
 
-    orden_meses = [
-        "Ene","Feb","Mar","Abr","May","Jun",
-        "Jul","Ago","Sep","Oct","Nov","Dic"
-    ]
+orden_meses = list(meses_nombre.keys())
 
-    tendencia = (
-        data
-        .groupby("Mes")[["Venta","Objetivo 1","Objetivo 2"]]
-        .sum()
-        .reset_index()
-    )
+# =========================
+# AGRUPAR (SIN TOCAR MES)
+# =========================
+tendencia = (
+    data
+    .groupby("Mes", as_index=False)[["Venta","Objetivo 1","Objetivo 2"]]
+    .sum()
+)
 
-    # mantener control numérico
-    tendencia["Mes_num"] = tendencia["Mes"]
+# =========================
+# ASEGURAR ORDEN NUMÉRICO REAL
+# =========================
+tendencia = tendencia.sort_values("Mes")
 
-    # map a nombre
-    tendencia["Mes"] = tendencia["Mes_num"].map(meses_nombre)
+# =========================
+# OCULTAR FUTURO (SIN 0)
+# =========================
+tendencia["Venta"] = tendencia["Venta"].where(
+    tendencia["Mes"] <= mes_actual
+)
 
-    # ordenar correcto por número (NO alfabético)
-    tendencia = tendencia.sort_values("Mes_num")
+# =========================
+# MAPEAR A TEXTO SOLO AL FINAL
+# =========================
+tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
 
-    # 🔥 CLAVE: venta futura en blanco (no 0)
-    tendencia["Venta"] = tendencia["Venta"].where(
-        tendencia["Mes_num"] <= mes_actual
-    )
+# =========================
+# ASEGURAR LOS 12 MESES SIEMPRE
+# =========================
+base = pd.DataFrame({
+    "Mes": list(meses_nombre.values())
+})
 
-    # reindex seguro a los 12 meses
-    base = pd.DataFrame({"Mes": orden_meses})
+tendencia = base.merge(
+    tendencia,
+    on="Mes",
+    how="left"
+)
 
-    tendencia = base.merge(
-        tendencia[["Mes","Venta","Objetivo 1","Objetivo 2"]],
-        on="Mes",
-        how="left"
-    )
-
-    st.line_chart(
-        tendencia.set_index("Mes")[["Venta","Objetivo 1","Objetivo 2"]]
-    )
+st.line_chart(
+    tendencia.set_index("Mes")[["Venta","Objetivo 1","Objetivo 2"]]
+)
