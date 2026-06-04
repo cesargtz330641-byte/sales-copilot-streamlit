@@ -147,7 +147,7 @@ if st.session_state.page == "dashboard":
     </div>
     """
 
-    components.html(card_html, height=155)
+    components.html(card_html, height=120)
     st.markdown("<div style='margin-top:-30px'></div>", unsafe_allow_html=True)
 
     # =====================================
