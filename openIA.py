@@ -146,7 +146,7 @@ if st.session_state.page == "dashboard":
     def fmt(v):
         icon = "▲" if v > 0 else "▼" if v < 0 else "●"
         color = "#16A34A" if v > 0 else "#D9534F" if v < 0 else "#6B7280"
-        return f"{icon} {v:,.0f}"
+        return f"<span style='color:{color};font-weight:600'>{icon} {v:,.0f}</span>"
 
     def fmt_pct(v):
         color = "#16A34A" if v > 0 else "#D9534F" if v < 0 else "#6B7280"
