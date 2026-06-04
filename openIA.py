@@ -14,7 +14,35 @@ st.set_page_config(
     layout="centered"
 )
 
+# =====================================
+# UI FIX (SOLO DISEÑO)
+# =====================================
 
+st.markdown("""
+<style>
+#MainMenu {visibility: hidden;}
+header {visibility: hidden;}
+footer {visibility: hidden;}
+
+.block-container {
+    padding-top: 0.5rem;
+    padding-bottom: 0rem;
+}
+
+div[data-testid="stVerticalBlock"] {
+    gap: 0.25rem;
+}
+
+iframe {
+    margin-top: -12px;
+}
+
+h3 {
+    margin-top: 0px !important;
+    margin-bottom: 4px !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # =====================================
 # LOGIN
