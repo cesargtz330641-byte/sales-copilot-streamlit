@@ -245,19 +245,25 @@ if st.session_state.page == "dashboard":
 
 base = tendencia.melt(
     id_vars=["Mes_txt"],
-    value_vars=["Real_k", "LE1_k", "LY_k"],
+    value_vars=["Real_k", "LY_k", "LE1_k"],
     var_name="Serie",
     value_name="Valor"
 )
 
+base["Serie"] = base["Serie"].map({
+    "Real_k": "Volumen 2026",
+    "LY_k": "Volumen 2025",
+    "LE1_k": "LE1"
+})
+
 orden_meses = list(meses_map.values())
 
 color_scale = alt.Scale(
-    domain=["Real_k", "LE1_k", "LY_k"],
+    domain=["Volumen 2026", "LE1", "Volumen 2025"],
     range=[
-        "#2563EB",  # Real 2026 (azul principal)
-        "#22C55E",  # LE1 (verde objetivo)
-        "#9CA3AF"   # 2025 (gris comparativo)
+        "#2563EB",  # 2026
+        "#22C55E",  # LE1
+        "#9CA3AF"   # 2025
     ]
 )
 
@@ -276,7 +282,7 @@ chart = alt.Chart(base).mark_line(size=2.5).encode(
         scale=color_scale,
         legend=alt.Legend(
             title=None,
-            orient="top"
+            orient="right"   # 👈 AQUÍ CAMBIA EL LUGAR
         )
     )
 )
