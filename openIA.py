@@ -271,10 +271,13 @@ if st.session_state.page == "dashboard":
     st.altair_chart(chart, use_container_width=True)
     
     # =========================
-# MATRIZ MENSUAL (% VS LE1)
+# MATRIZ % VS LE1 (LIMPIA)
 # =========================
 
-tabla = tendencia[["Mes_txt", "Real", "LE1"]].copy()
+tabla = tendencia[["Mes_txt", "Mes", "Real", "LE1"]].copy()
+
+# solo meses hasta actual (IMPORTANTE)
+tabla = tabla[tabla["Mes"] <= mes_actual]
 
 tabla["% vs LE1"] = np.where(
     tabla["LE1"] == 0,
@@ -282,27 +285,35 @@ tabla["% vs LE1"] = np.where(
     (tabla["Real"] / tabla["LE1"] - 1) * 100
 )
 
-# Pivot a formato meses como columnas
+# pivot
 matriz = tabla[["Mes_txt", "% vs LE1"]].set_index("Mes_txt").T
 
-# asegurar orden Ene-Dic
-matriz = matriz[orden_meses]
+matriz = matriz[orden_meses[:mes_actual]]  # solo meses reales
 
+# formato con color HTML
 def formato(v):
     if pd.isna(v):
         return ""
-    color = "green" if v >= 0 else "red"
+
     sign = "+" if v >= 0 else ""
-    return f"{sign}{v:.1f}%"
+    color = "#16A34A" if v >= 0 else "#EF4444"  # verde / rojo
+
+    return f"<span style='color:{color};font-size:12px;font-weight:600'>{sign}{v:.1f}%</span>"
 
 matriz_fmt = matriz.copy()
 
 for col in matriz_fmt.columns:
     matriz_fmt[col] = matriz_fmt[col].apply(formato)
 
+# CSS para reducir tamaño global de tabla
+st.markdown("""
+<style>
+div[data-testid="stDataFrame"] {
+    font-size: 12px;
+}
+</style>
+""", unsafe_allow_html=True)
+
 st.markdown("### 📊 % vs LE1 por mes")
 
-st.dataframe(
-    matriz_fmt,
-    use_container_width=True
-)
+st.write(matriz_fmt.to_html(escape=False), unsafe_allow_html=True)
