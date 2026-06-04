@@ -87,7 +87,7 @@ if "repre" not in st.session_state:
 
 if st.session_state.page == "selector":
 
-    st.markdown("### 📊 Sales Mobile Pro")
+    st.markdown("### 📊 App representados")
 
     cols = st.columns(2)
 
