@@ -244,9 +244,22 @@ meses_nombre = {
     12: "Dic"
 }
 
-tendencia["MesNombre"] = tendencia["Mes"].map(meses_nombre)
+orden_meses = [
+    "Ene","Feb","Mar","Abr","May","Jun",
+    "Jul","Ago","Sep","Oct","Nov","Dic"
+]
 
-tendencia = tendencia.set_index("MesNombre")
+tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
+
+tendencia["Mes"] = pd.Categorical(
+    tendencia["Mes"],
+    categories=orden_meses,
+    ordered=True
+)
+
+tendencia = tendencia.sort_values("Mes")
+
+tendencia = tendencia.set_index("Mes")
 
 st.line_chart(
     tendencia[
@@ -255,6 +268,5 @@ st.line_chart(
             "Objetivo 1",
             "Objetivo 2"
         ]
-    ],
-    use_container_width=True
+    ]
 )
