@@ -1,6 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import pandas as pd
+import numpy as np
 from datetime import datetime
 
 # =====================================
@@ -142,11 +143,10 @@ if st.session_state.page == "dashboard":
     components.html(card_html, height=140, scrolling=False)
 
     # =====================================
-    # TENDENCIA (CORREGIDA)
+    # TENDENCIA
     # =====================================
 
     st.subheader("Tendencia")
-    from datetime import datetime
 
     mes_actual = datetime.now().month
 
@@ -162,29 +162,33 @@ if st.session_state.page == "dashboard":
     }
 
     tendencia = (
-    data
-    .groupby("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
-    .sum()
-    .reset_index()
-)
+        data
+        .groupby("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
+        .sum()
+        .reset_index()
+    )
 
-# 🔥 guardar mes numérico ANTES de cualquier cambio
-tendencia["Mes_num"] = tendencia["Mes"]
+    tendencia["Mes_num"] = tendencia["Mes"]
 
-# 🔥 ocultar ventas futuras
-tendencia.loc[tendencia["Mes_num"] > mes_actual, "Venta"] = np.nan
+    # ocultar venta futura (NO 0, NO caída)
+    tendencia.loc[
+        tendencia["Mes_num"] > mes_actual,
+        "Venta"
+    ] = np.nan
 
-# 🔥 convertir a nombre SOLO al final
-tendencia["Mes"] = tendencia["Mes_num"].map(meses_nombre)
+    tendencia["Mes"] = tendencia["Mes_num"].map(meses_nombre)
 
-# 🔥 asegurar estructura completa Ene–Dic
-tendencia = (
-    pd.DataFrame({"Mes": meses_orden})
-    .merge(tendencia[["Mes", "Venta", "Objetivo 1", "Objetivo 2"]], on="Mes", how="left")
-)
+    tendencia = (
+        pd.DataFrame({"Mes": meses_orden})
+        .merge(
+            tendencia[["Mes", "Venta", "Objetivo 1", "Objetivo 2"]],
+            on="Mes",
+            how="left"
+        )
+    )
 
-tendencia = tendencia.fillna(0)
+    tendencia = tendencia.fillna(0)
 
-st.line_chart(
-    tendencia.set_index("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
-)
+    st.line_chart(
+        tendencia.set_index("Mes")[["Venta", "Objetivo 1", "Objetivo 2"]]
+    )
