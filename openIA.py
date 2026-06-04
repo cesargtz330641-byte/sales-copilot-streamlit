@@ -26,13 +26,13 @@ if password != PASSWORD:
     st.stop()
 
 # =========================
-# CARGA DE DATOS
+# DATOS
 # =========================
 
 df = pd.read_excel("ChatBox.xlsx")
 
 # =========================
-# SESSION STATE
+# SESSION
 # =========================
 
 if "page" not in st.session_state:
@@ -42,7 +42,7 @@ if "repre" not in st.session_state:
     st.session_state.repre = None
 
 # =========================
-# PANTALLA 1 - SELECTOR
+# PANTALLA 1
 # =========================
 
 if st.session_state.page == "selector":
@@ -60,14 +60,14 @@ if st.session_state.page == "selector":
             st.rerun()
 
 # =========================
-# PANTALLA 2 - DASHBOARD
+# PANTALLA 2
 # =========================
 
 if st.session_state.page == "dashboard":
 
     data = df[
-        (df["Repre"] == st.session_state.repre) &
-        (df["Anio"] == 2026)
+        (df["Repre"] == st.session_state.repre)
+        & (df["Anio"] == 2026)
     ].copy()
 
     st.title(f"📊 {st.session_state.repre}")
@@ -77,7 +77,7 @@ if st.session_state.page == "dashboard":
         st.rerun()
 
     # =========================
-    # KPIs YTD
+    # CALCULOS YTD
     # =========================
 
     venta_ytd = data["Venta"].sum()
@@ -91,59 +91,49 @@ if st.session_state.page == "dashboard":
     pct1 = 0 if obj1_ytd == 0 else (gap1 / obj1_ytd) * 100
     pct2 = 0 if obj2_ytd == 0 else (gap2 / obj2_ytd) * 100
 
-    cumplimiento1 = 0 if obj1_ytd == 0 else (venta_ytd / obj1_ytd) * 100
-    cumplimiento2 = 0 if obj2_ytd == 0 else (venta_ytd / obj2_ytd) * 100
-
     # =========================
     # TARJETA PRINCIPAL
     # =========================
 
-    st.subheader("💰 Venta YTD 2026")
+    with st.container(border=True):
 
-    st.metric(
-        label="Venta",
-        value=f"${venta_ytd:,.0f}"
-    )
+        st.caption("Volumen YTD 2026")
 
-    st.write("**Objetivo 1**")
-    st.write(f"Meta: ${obj1_ytd:,.0f}")
-    st.write(f"Diferencia: ${gap1:,.0f}")
-    st.write(f"Cumplimiento: {cumplimiento1:.1f}%")
+        st.metric(
+            label="",
+            value=f"{venta_ytd:,.0f}"
+        )
 
-    st.divider()
+        st.divider()
 
-    st.write("**Objetivo 2**")
-    st.write(f"Meta: ${obj2_ytd:,.0f}")
-    st.write(f"Diferencia: ${gap2:,.0f}")
-    st.write(f"Cumplimiento: {cumplimiento2:.1f}%")
+        c1, c2, c3 = st.columns([1.2, 1, 0.7])
 
-    st.divider()
+        c1.write("Obj 1")
+        c2.write(f"{gap1:,.0f}")
+        c3.write(f"{pct1:.0f}%")
+
+        c1.caption(f"Meta: {obj1_ytd:,.0f}")
+
+        st.divider()
+
+        c1, c2, c3 = st.columns([1.2, 1, 0.7])
+
+        c1.write("Obj 2")
+        c2.write(f"{gap2:,.0f}")
+        c3.write(f"{pct2:.0f}%")
+
+        c1.caption(f"Meta: {obj2_ytd:,.0f}")
 
     # =========================
-    # TENDENCIA MENSUAL
+    # TENDENCIA
     # =========================
 
-    st.subheader("📈 Tendencia Mensual")
+    st.subheader("📈 Tendencia")
 
-    tendencia = (
+    chart = (
         data.groupby("Mes")[["Venta", "Objetivo 1"]]
         .sum()
         .sort_index()
     )
 
-    st.line_chart(tendencia)
-
-    # =========================
-    # RANKING DE MESES
-    # =========================
-
-    st.subheader("📊 Ranking de Meses")
-
-    ranking = (
-        data.groupby("Mes")["Venta"]
-        .sum()
-        .sort_values(ascending=False)
-    )
-
-    for mes, venta in ranking.items():
-        st.write(f"📅 Mes {mes}: ${venta:,.0f}")
+    st.line_chart(chart)
