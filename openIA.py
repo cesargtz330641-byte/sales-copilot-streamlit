@@ -332,27 +332,28 @@ st.markdown("""
 <style>
 table {
     width: 100%;
+    table-layout: fixed;   /* 🔥 CLAVE */
     border-collapse: collapse;
-    font-size: 9px;
+    font-size: 8px;
 }
 
+th, td {
+    font-size: 8px !important;
+    text-align: center;
+    padding: 1px !important;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* columnas aún más compactas */
 th {
-    font-size: 9px !important;
     font-weight: 500 !important;
     color: #9CA3AF;
-    text-align: center;
-    padding: 2px;
 }
 
+/* evita expansión por contenido */
 td {
-    font-size: 9px !important;
-    text-align: center;
-    padding: 2px;
+    max-width: 35px;
 }
 </style>
 """, unsafe_allow_html=True)
-
-st.markdown(
-    matriz_fmt.to_html(escape=False),
-    unsafe_allow_html=True
-)
