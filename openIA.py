@@ -11,6 +11,73 @@ st.set_page_config(
 )
 
 # =====================================
+# CSS MOBILE
+# =====================================
+
+st.markdown("""
+<style>
+
+/* Reduce espacios de Streamlit */
+.block-container {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+/* Tarjeta */
+.card {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 24px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+/* Nombre representante */
+.rep {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 0px;
+}
+
+/* Subtitulo */
+.sub {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 6px;
+}
+
+/* Numero principal */
+.venta {
+    font-size: 56px;
+    font-weight: 700;
+    color: #1D4ED8;
+    line-height: 1;
+    margin-bottom: 10px;
+}
+
+/* Filas de objetivos */
+.row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 15px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.negativo {
+    color: #DC2626;
+    font-weight: 600;
+}
+
+.positivo {
+    color: #16A34A;
+    font-weight: 600;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# =====================================
 # LOGIN
 # =====================================
 
@@ -45,18 +112,15 @@ if "repre" not in st.session_state:
 # FUNCIONES
 # =====================================
 
-def format_short(num):
+def short_number(x):
 
-    abs_num = abs(num)
+    if abs(x) >= 1_000_000:
+        return f"{x/1_000_000:.1f}M"
 
-    if abs_num >= 1_000_000:
-        return f"{num/1_000_000:.1f}M"
+    if abs(x) >= 1_000:
+        return f"{x/1_000:.1f}K"
 
-    if abs_num >= 1_000:
-        return f"{num/1_000:.1f}K"
-
-    return f"{num:,.0f}"
-
+    return f"{x:,.0f}"
 
 # =====================================
 # SELECTOR
@@ -65,8 +129,6 @@ def format_short(num):
 if st.session_state.page == "selector":
 
     st.title("📱 Sales Mobile Pro")
-
-    st.write("Selecciona un representado")
 
     reps = sorted(
         df["Repre"]
@@ -91,13 +153,17 @@ if st.session_state.page == "selector":
 if st.session_state.page == "dashboard":
 
     data = df[
-        (df["Repre"] == st.session_state.repre)
-        & (df["Anio"] == 2026)
+        (df["Repre"] == st.session_state.repre) &
+        (df["Anio"] == 2026)
     ].copy()
 
     if st.button("⬅ Volver"):
         st.session_state.page = "selector"
         st.rerun()
+
+    # =====================================
+    # KPIs
+    # =====================================
 
     venta = data["Venta"].sum()
 
@@ -107,114 +173,59 @@ if st.session_state.page == "dashboard":
     gap1 = venta - obj1
     gap2 = venta - obj2
 
-    pct1 = 0 if obj1 == 0 else gap1 / obj1 * 100
-    pct2 = 0 if obj2 == 0 else gap2 / obj2 * 100
+    pct1 = 0 if obj1 == 0 else (gap1 / obj1) * 100
+    pct2 = 0 if obj2 == 0 else (gap2 / obj2) * 100
 
-    color1 = "#D9534F" if gap1 < 0 else "#28A745"
-    color2 = "#D9534F" if gap2 < 0 else "#28A745"
+    clase1 = "positivo" if gap1 >= 0 else "negativo"
+    clase2 = "positivo" if gap2 >= 0 else "negativo"
 
     # =====================================
     # TARJETA
     # =====================================
 
-    tarjeta = f"""
-    <div style="
-        background:white;
-        border:1px solid #E5E7EB;
-        border-radius:30px;
-        padding:18px;
-        margin-bottom:15px;
-        box-shadow:0 2px 8px rgba(0,0,0,.05);
-    ">
+    st.markdown(f"""
+    <div class="card">
 
-        <div style="
-            font-size:15px;
-            color:#666;
-            margin-bottom:2px;
-        ">
+        <div class="rep">
             {st.session_state.repre}
         </div>
 
-        <div style="
-            font-size:12px;
-            color:#999;
-        ">
+        <div class="sub">
             Volumen YTD 2026
         </div>
 
-        <div style="
-            font-size:56px;
-            font-weight:700;
-            color:#1D4ED8;
-            line-height:1;
-            margin-top:6px;
-            margin-bottom:14px;
-        ">
-            {format_short(venta)}
+        <div class="venta">
+            {short_number(venta)}
         </div>
 
-        <table width="100%" style="
-            border-collapse:collapse;
-            font-size:15px;
-        ">
+        <div class="row">
+            <span><b>O1</b> {short_number(obj1)}</span>
+            <span class="{clase1}">
+                {short_number(gap1)}
+            </span>
+            <span>
+                {pct1:.0f}%
+            </span>
+        </div>
 
-            <tr>
-                <td style="padding:4px 0;">
-                    <b>Obj 1</b>
-                </td>
-
-                <td align="right">
-                    {format_short(obj1)}
-                </td>
-
-                <td align="right" style="
-                    color:{color1};
-                    font-weight:600;
-                ">
-                    {format_short(gap1)}
-                </td>
-
-                <td align="right">
-                    {pct1:.0f}%
-                </td>
-            </tr>
-
-            <tr>
-                <td style="padding:4px 0;">
-                    <b>Obj 2</b>
-                </td>
-
-                <td align="right">
-                    {format_short(obj2)}
-                </td>
-
-                <td align="right" style="
-                    color:{color2};
-                    font-weight:600;
-                ">
-                    {format_short(gap2)}
-                </td>
-
-                <td align="right">
-                    {pct2:.0f}%
-                </td>
-            </tr>
-
-        </table>
+        <div class="row">
+            <span><b>O2</b> {short_number(obj2)}</span>
+            <span class="{clase2}">
+                {short_number(gap2)}
+            </span>
+            <span>
+                {pct2:.0f}%
+            </span>
+        </div>
 
     </div>
-    """
-
-    st.markdown(
-        tarjeta,
-        unsafe_allow_html=True
-    )
+    """, unsafe_allow_html=True)
 
     # =====================================
     # TENDENCIA
     # =====================================
 
-    chart = (
+    tendencia = (
         data
         .groupby("Mes")[["Venta", "Objetivo 1"]]
         .sum()
@@ -222,6 +233,6 @@ if st.session_state.page == "dashboard":
     )
 
     st.line_chart(
-        chart,
+        tendencia,
         use_container_width=True
     )
