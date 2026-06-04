@@ -201,20 +201,53 @@ if st.session_state.page == "dashboard":
 
     st.subheader("Tendencia")
 
-    tendencia = (
-        data
-        .groupby("Mes")[
-            [
-                "Venta",
-                "Objetivo 1",
-                "Objetivo 2"
-            ]
-        ]
-        .sum()
-        .sort_index()
-    )
+    from datetime import datetime
 
-    st.line_chart(
+mes_actual = f"{datetime.now().month:02d}"
+
+tendencia = (
+    data
+    .groupby("Mes")[
+        [
+            "Venta",
+            "Objetivo 1",
+            "Objetivo 2"
+        ]
+    ]
+    .sum()
+    .sort_index()
+    .reset_index()
+)
+
+# Venta no se muestra para meses futuros
+
+tendencia.loc[
+    tendencia["Mes"] > mes_actual,
+    "Venta"
+] = None
+
+# Meses amigables
+
+meses_nombre = {
+    "01":"Ene",
+    "02":"Feb",
+    "03":"Mar",
+    "04":"Abr",
+    "05":"May",
+    "06":"Jun",
+    "07":"Jul",
+    "08":"Ago",
+    "09":"Sep",
+    "10":"Oct",
+    "11":"Nov",
+    "12":"Dic"
+}
+
+tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
+
+tendencia = tendencia.set_index("Mes")
+
+st.line_chart(
         tendencia,
         use_container_width=True
     )
