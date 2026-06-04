@@ -215,18 +215,19 @@ tendencia = (
         ]
     ]
     .sum()
-    .sort_index()
     .reset_index()
 )
 
-# Ocultar venta en meses futuros
+# Ocultar venta futura
 
 tendencia.loc[
     tendencia["Mes"] > mes_actual,
     "Venta"
 ] = None
 
-# Nombres de meses
+# Orden correcto
+
+tendencia = tendencia.sort_values("Mes")
 
 meses_nombre = {
     1: "Ene",
@@ -243,11 +244,17 @@ meses_nombre = {
     12: "Dic"
 }
 
-tendencia["Mes"] = tendencia["Mes"].map(meses_nombre)
+tendencia["MesNombre"] = tendencia["Mes"].map(meses_nombre)
 
-tendencia = tendencia.set_index("Mes")
+tendencia = tendencia.set_index("MesNombre")
 
 st.line_chart(
-    tendencia,
+    tendencia[
+        [
+            "Venta",
+            "Objetivo 1",
+            "Objetivo 2"
+        ]
+    ],
     use_container_width=True
 )
