@@ -344,11 +344,18 @@ th, td {
 # TITULO MINIMO
 # =========================
 
-st.markdown(
-    "<div style='font-size:9px;color:#9CA3AF;margin:2px 0;'>% vs LE1</div>",
-    unsafe_allow_html=True
-)
-
+st.markdown("""
+<div style="
+    font-size:10px;
+    font-weight:500;
+    color:#9CA3AF;
+    margin-bottom:6px;
+    margin-top:10px;
+">
+% vs LE1
+</div>
+""", unsafe_allow_html=True)
+st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
 # =========================
 # RENDER FINAL
 # =========================
