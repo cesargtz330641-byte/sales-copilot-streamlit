@@ -82,20 +82,23 @@ if "repre" not in st.session_state:
     st.session_state.repre = None
 
 # =====================================
-# SELECTOR
+# SELECTOR (GRID 2 COLUMNAS)
 # =====================================
 
 if st.session_state.page == "selector":
 
     st.markdown("### 📊 Sales Mobile Pro")
 
+    cols = st.columns(2)
+
     reps = sorted(df["Repre"].dropna().unique())
 
-    for r in reps:
-        if st.button(f"📊 {r}", use_container_width=True):
-            st.session_state.repre = r
-            st.session_state.page = "dashboard"
-            st.rerun()
+    for i, r in enumerate(reps):
+        with cols[i % 2]:
+            if st.button(r, use_container_width=True):
+                st.session_state.repre = r
+                st.session_state.page = "dashboard"
+                st.rerun()
 
 # =====================================
 # DASHBOARD
@@ -165,7 +168,7 @@ if st.session_state.page == "dashboard":
     display:inline-block;
 ">
 
-        <div style="font-size:11px;color:#888;">Volumen YTD</div>
+        <div style="font-size:11px;color:#888;">Volumen CJ9L YTD</div>
 
         <div style="font-size:32px;font-weight:bold;color:#1D4ED8;">
             {real_ytd:,.0f}
