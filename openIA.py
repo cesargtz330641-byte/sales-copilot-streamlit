@@ -177,24 +177,51 @@ if st.session_state.page == "dashboard":
 
     st.subheader("Tendencia")
 
-    mes_actual = datetime.now().month
+    import numpy as np
 
+mes_actual = datetime.now().month
+
+meses = pd.DataFrame({
+    "Mes_num": range(1, 13),
+    "Mes_txt": [
+        "Ene","Feb","Mar","Abr","May","Jun",
+        "Jul","Ago","Sep","Oct","Nov","Dic"
+    ]
+})
+
+# =========================
+# AGRUPAR DATA REAL
+# =========================
 tendencia = (
     data
-    .groupby(["Mes_num", "Mes_txt"])[["Venta","Objetivo 1","Objetivo 2"]]
+    .groupby("Mes")[["Venta","Objetivo 1","Objetivo 2"]]
     .sum()
     .reset_index()
 )
 
-# ordenar por número
-tendencia = tendencia.sort_values("Mes_num")
+# asegurar tipo numérico
+tendencia["Mes"] = pd.to_numeric(tendencia["Mes"], errors="coerce")
 
-# ocultar futuro sin romper gráfica
+# =========================
+# MERGE CON BASE FIJA (CLAVE DEL ORDEN)
+# =========================
+tendencia = meses.merge(
+    tendencia,
+    left_on="Mes_num",
+    right_on="Mes",
+    how="left"
+)
+
+# =========================
+# OCULTAR FUTURO (SIN 0)
+# =========================
 tendencia["Venta"] = tendencia["Venta"].where(
     tendencia["Mes_num"] <= mes_actual
 )
 
-# gráfico usando texto solo para display
+# =========================
+# GRAFICAR EN ORDEN FIJO
+# =========================
 st.line_chart(
     tendencia.set_index("Mes_txt")[["Venta","Objetivo 1","Objetivo 2"]]
 )
