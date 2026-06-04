@@ -154,13 +154,16 @@ if st.session_state.page == "dashboard":
 
     card_html = f"""
     <div style="
-        font-family:Arial;
-        background:white;
-        border:1px solid #E5E7EB;
-        border-radius:14px;
-        padding:10px;
-        width:100%;
-    ">
+    font-family:Arial;
+    background:white;
+    border:1px solid #E5E7EB;
+    border-radius:14px;
+    padding:10px;
+    max-width:320px;
+    width:100%;
+    box-sizing:border-box;
+    display:inline-block;
+">
 
         <div style="font-size:11px;color:#888;">Volumen YTD</div>
 
