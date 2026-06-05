@@ -10,7 +10,7 @@ import altair as alt
 # =====================================
 
 st.set_page_config(
-    page_title="Sales Mobile Pro",
+    page_title="App Representados",
     layout="centered"
 )
 
@@ -48,7 +48,7 @@ h3 {
 # LOGIN
 # =====================================
 
-PASSWORD = "Ventas2026"
+PASSWORD = "pdspcam2026"
 
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
